@@ -15,6 +15,7 @@ import time
 import json
 from smart_open import open as s3open
 from re import match, sub
+import numpy as np
 import extract
 import load
 from utils import get_objects
