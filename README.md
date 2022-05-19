@@ -21,7 +21,7 @@ As shown in the architecture below:
 - B: [configure development environment] Properly configure the chosen developer environment (e.g., local laptop, AWS cloud9 IDE, EC2 instance) to be accessible to source S3 bucket and S3 Secret Manager
 - C: [install dependencies] Run `bash ./dep/setup.py` to install all required dependency libraries specified in the `./dep/requirement.txt` file
 - D: [create config file] Open `src/config.json` and fill out or modify required configuration information needed for running all the staging and transformation scripts
-- E: [decrypt and decompress] Run `staging/decrypt.py` on the configured developer environment with `read_bucket` and `write_bucket` parameters specified.  
+- E: [decrypt and decompress] Run `staging/decrypt.py` on the configured developer environment  
 - F: [extract and load] Run `staging/stage_cms_care.py` on the configured developer environment  
 
 ### Transformation to PCORnet CDM
@@ -31,15 +31,17 @@ To improve interoperatability, we have implemented a process of transforming sou
 
 #### Option A: stepwise transformation
 Run parts of the `c2p/transform_step.py` on the configured developer environment. You may want to start with running the transformation step by step to identify and fix any bugs should there be any. The script consist of three parts: 
-1) create table shells by running the DDL (data definition lanugaue) scripts; 
+1) create table shells by running the DDL (data definition lanugaue) scripts in `./src/ddl`; 
 2) load reference concept mapping tables pre-loaded in `./ref/` folder; 
-3) stage source CMS tables in the staging area in a 1-to-1 fashion (i.e. 1 source table to 1 target table), including applying all the mapping tables and creating de-duplication indices; 
-4) perform the final transformation step and write to target CDM table.  
+3) run stored procedures in `./src/stored_procedures` for staging and transformation; 
+3) stage source CMS tables in the staging area in a 1-to-1 fashion (i.e. 1 source table to 1 target table), including applying all the mapping tables and creating de-duplication indices (`./src/dml`); 
+4) perform the final transformation step and write to target CDM table (`./src/dml`).  
 
 #### Option B: one-time transformation
 For fully automated transformation, you can also run `c2p/transform_full.py` on the configured developer environment, which runs all the steps mentioned above without requiring any human intervention. However, we would recommend running the stepwise transformation at least once to validate the underlying sql scripts.     
 
 
+---------------------------------------------------------------------------------------------------
 References: 
 - [CMS to PCORnet CDM](https://github.com/PCORnet-DRN-OC/Medicare-Data-Transformation)
 - [CMS to OMOP CDM](https://github.com/OHDSI/ETL-CMS)
