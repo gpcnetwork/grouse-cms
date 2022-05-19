@@ -1,0 +1,33 @@
+{
+    "snowflake_cms_stg":{
+        "env_role":"snowflake_role",
+        "env_db":"snowflake_database",
+        "env_wh":"snowflake_warehouse",
+        "env_schema":"snowflake_staging_schema",
+        "stg_stage":"snowflake_s3_external_stage",
+        "stg_table":"snowflake_staging_table"
+    },
+    "snowflake_c2p_stg":{
+        "env_role":"snowflake_role",
+        "env_db":"snowflake_database",
+        "env_wh":"snowflake_warehouse",
+        "env_schema":"snowflake_staging_schema"
+     },
+    "snowflake_c2p_main":{
+        "env_role":"snowflake_role",
+        "env_db":"snowflake_database",
+        "env_wh":"snowflake_warehouse",
+        "env_schema":"snowflake_cdm_schema"
+    },
+    "aws":{
+        "region": "",
+        "user_secret": "",
+        "pwd_secret": "",
+        "acct_secret": "",
+        "s3_bucket_source": "",
+        "s3_bucket_target": "",
+        "s3_bucket_key": "CMS/"
+    },
+    "cms_file_keys": ["RXXXX",
+                      "RYYYY"]
+}

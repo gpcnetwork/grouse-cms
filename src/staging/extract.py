@@ -8,11 +8,9 @@
 # YOU DON'T NEED TO RUN THIS SCRIPT, IT WILL BE CALLED BY load.py
 #####################################################################
 from typing import Dict
-from re import findall, match, search
+from re import findall, match
 from itertools import compress
 from abc import ABC, abstractmethod
-import requests
-import pandas as pd
 
 class SDAFileNameParser:
     '''

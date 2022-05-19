@@ -4,7 +4,6 @@
 # File: death_ddl.sql                                                 
 # DDL script for initializing intermediate and resulting tables:                                               
 # - PRIVATE_DEATH
-# - PRIVATE_DEATH_STAGE
 */
 -- initialize final table
 create or replace table PRIVATE_DEATH (
@@ -16,12 +15,3 @@ create or replace table PRIVATE_DEATH (
     ,primary key(PATID)
 );
 
--- initialize staging table
-create or replace table %s.PRIVATE_DEATH_STAGE (
-     BENE_ID varchar(50) NOT NULL
-    ,DEATH_DT date NULL
-    ,V_DOD_SW varchar(1)
-    ,SRC_SCHEMA varchar(20) NOT NULL
-    ,SRC_TABLE varchar(30) NOT NULL
-    ,SRC_DATE date NOT NULL
-);

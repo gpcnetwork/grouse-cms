@@ -7,7 +7,7 @@
 ref: https://github.com/kumc-bmi/grouse/blob/master/etl_i2b2/sql_scripts/cms_enr_dstats.sql
 ref: https://resdac.org/articles/identifying-medicare-managed-care-beneficiaries-master-beneficiary-summary-or-denominator
 */
-create or replace procedure transform_to_enrollment(PART STRING)
+create or replace procedure transform_to_enrollment(PART STRING, STG_SCHEMA STRING)
 returns variant
 language javascript
 as
@@ -21,7 +21,7 @@ var collate_col_stmt = snowflake.createStatement({
     sqlText: `SELECT table_name, listagg(column_name,',') within group (ORDER BY column_name) as cols  
                 FROM information_schema.columns 
                 WHERE table_catalog = 'GROUSE_DB'
-                  AND table_schema = 'CMS_PCORNET_CDM_STAGING' 
+                  AND table_schema = '`+ STG_SCHEMA +`' 
                   AND table_name like '%ENROLLMENT%STAGE%'
                   AND table_name like '%`+ PART +`%'
                 GROUP BY table_name;`});
@@ -39,7 +39,7 @@ if (PART.includes('AB')){
               USING(
                  WITH per_bene_mo AS (
                     SELECT bene_id, rfrnc_yr, buyin, hmo, right(buyin_mo,2) AS mo
-                    FROM CMS_PCORNET_CDM_STAGING.`+ table +`
+                    FROM `+ STG_SCHEMA +`.`+ table +`
                     -- multi unpivot
                     UNPIVOT 
                      (buyin for buyin_mo in (`+ cols_buyin +`)) buyin_unpvt
@@ -85,7 +85,7 @@ if (PART.includes('AB')){
               USING(
                  WITH per_bene_mo AS (
                     SELECT bene_id, rfrnc_yr, buyin, pbp, right(buyin_mo,2) AS mo
-                    FROM CMS_PCORNET_CDM_STAGING.`+ table +`
+                    FROM `+ STG_SCHEMA +`.`+ table +`
                     -- multi unpivot
                     UNPIVOT 
                      (buyin for buyin_mo in (`+ cols_ptc +`)) buyin_unpvt
@@ -130,7 +130,7 @@ if (PART.includes('AB')){
               USING(
                  WITH per_bene_mo AS (
                     SELECT bene_id, rfrnc_yr, buyin, pbp, rds, right(buyin_mo,2) AS mo
-                    FROM CMS_PCORNET_CDM_STAGING.`+ table +`
+                    FROM `+ STG_SCHEMA +`.`+ table +`
                     -- multi unpivot
                     UNPIVOT 
                      (buyin for buyin_mo in (`+ cols_ptd +`)) buyin_unpvt

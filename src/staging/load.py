@@ -15,17 +15,10 @@ import ast
 import snowflake.connector as sf
 from snowflake.connector.pandas_tools import write_pandas
 from dataclasses import dataclass
-from typing import Optional
-from smart_open import open as s3open
-import time
-import numpy as np
-from random import randint
-import pandas as pd
-from sas7bdat import SAS7BDAT
 import pyreadstat
-import s3fs
-from datetime import datetime,date,timedelta
-from os import remove
+from typing import Optional
+import pandas as pd
+from datetime import date,timedelta
 
 
 @dataclass
@@ -36,16 +29,6 @@ class AWSSecrets:
         """read connection strings= values from secret manager"""
         secrete_client = boto3.client(service_name='secretsmanager',region_name="us-east-2") #! region name is hard-coded
         return ast.literal_eval(secrete_client.get_secret_value(SecretId=self.secret_name)['SecretString'])[self.secret_name]
-
-@dataclass
-class SnowflakeParams:
-    env_role: Optional[str] = None
-    env_wh: Optional[str] = None
-    env_db: Optional[str] = None
-    stg_stage: Optional[str] = None
-    stg_table: Optional[str] = None
-    tgt_schema: Optional[str] = None
-    tgt_table: Optional[str] = None
 
 class SnowflakeConnection(object): 
     """
@@ -71,31 +54,30 @@ class SnowflakeConnection(object):
         )
         return self.connector  # need to return connection object for "write_pandas" to work
 
-    def __exit__(self,type,value,traceback):
+    def __exit__(self,traceback):
         if traceback is None:
             self.connector.commit()
         else:
             self.connector.rollback()
         self.connector.close()
 
-def SfExec_EnvSetup(conn,params:SnowflakeParams):
+def SfExec_EnvSetup(conn,params:dict):
     """setup snowflake environment for staging tasks"""
-    conn.execute(f'USE ROLE {params.env_role}')
-    conn.execute(f'USE WAREHOUSE {params.env_wh}')
-    conn.execute(f'USE DATABASE {params.env_db}')
-    conn.execute(f'USE SCHEMA STAGING')
-    conn.execute('ALTER SESSION SET DATE_INPUT_FORMAT = \'YYYYMMDD\'')
+    conn.execute(f'USE ROLE {params["env_role"]}')
+    conn.execute(f'USE WAREHOUSE {params["env_wh"]}')
+    conn.execute(f'USE DATABASE {params["env_db"]}')
+    conn.execute(f'USE SCHEMA {params["env_schema"]}')
         
-def SfExec_CreateFixedWidthTable(conn,params:SnowflakeParams):       
+def SfExec_CreateFixedWidthTable(conn,params:dict):       
     """create table shell for input fixed-width data"""
-    conn.execute(f'CREATE OR REPLACE TABLE {params.stg_table} \n'
+    conn.execute(f'CREATE OR REPLACE TABLE {params["stg_table"]} \n'
                  f' (PLAIN_TEXT_COL varchar(4000))')
 
-def SfExec_CopyIntoDat(conn,params:SnowflakeParams,fname):
+def SfExec_CopyIntoDat(conn,params:dict,fname):
     """copy .dat file into table shell"""
-    conn.execute(f'TRUNCATE {params.stg_table}')
-    conn.execute(f'COPY INTO {params.stg_table} \n'
-                 f' FROM @{params.stg_stage}/dat_files/{fname}.dat \n'
+    conn.execute(f'TRUNCATE {params["stg_table"]}')
+    conn.execute(f'COPY INTO {params["stg_table"]} \n'
+                 f' FROM @{params["stg_stage"]}/dat_files/{fname}.dat \n'
                  f' ON_ERROR = \'abort_statement\'')
 
 def SfExec_StitchParts(conn,tbl:str,parts:list,drop_after_merge=False):
@@ -114,7 +96,7 @@ def SfExec_StitchParts(conn,tbl:str,parts:list,drop_after_merge=False):
             conn.execute(f'DROP TABLE IF EXISTS {part}')
 
 # https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
-def SfExec_ScriptsFromFile(conn, path_to_file, args):
+def SfExec_ScriptsFromFile(conn, path_to_file):
     # Open and read the file as a single buffer
     fd = open(path_to_file, 'r')
     sqlFile = fd.read()
@@ -126,7 +108,7 @@ def SfExec_ScriptsFromFile(conn, path_to_file, args):
     # Execute every command from the input file
     for command in sqlCommands:
         try:
-            conn.execute(command, args)
+            conn.execute(command)
         except Exception as e:
             print("Command skipped: ", e)
 
@@ -213,7 +195,7 @@ def Read_SAS7bDAT(src_sas,row_offset=0,row_limit=-1,num_processes=1,verbose=True
         else: 
             return [True,sasdf,sasmeta.original_variable_types]
     
-def SfWrite_PandaDF(conn,params:SnowflakeParams,sasdf,verbose=True):
+def SfWrite_PandaDF(conn,params,sasdf,verbose=True):
         # write pandas dataframe to snowflake
         try:
             write_pandas(conn,sasdf,params.tgt_table,

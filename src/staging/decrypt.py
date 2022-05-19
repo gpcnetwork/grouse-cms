@@ -12,22 +12,19 @@
 # 3. sudo yum install glibc.i686
 #####################################################################
 import os
-import sys
 import time
 import boto3
 import base64
-import botocore
 from botocore.exceptions import ClientError
 import pexpect
 import logging
 import ast
 import matplotlib.pylab as plt
 import csv
-import botocore.session
 import logging  
+import json
 from uuid import uuid4
 from datetime import datetime
-from boto3 import Session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
@@ -93,7 +90,7 @@ class BotoSession:
             An identifier for the assumed role session. 
         """
 
-        self.region_name = 'us-east-2'
+        self.region_name = region_name
         self.profile_name = profile_name
         self.sts_arn = sts_arn
         self.service_name = service_name
@@ -105,7 +102,7 @@ class BotoSession:
         Get session credentials
         """
         credentials = {}
-        session = Session(region_name=self.region_name, profile_name=self.profile_name)
+        session = boto3.Session(region_name=self.region_name, profile_name=self.profile_name)
 
         sts_client = session.client(self.service_name, region_name=self.region_name)
         response = sts_client.assume_role(
@@ -123,7 +120,7 @@ class BotoSession:
 
         return credentials
     
-    def refreshable_session(self) -> Session:
+    def refreshable_session(self) -> boto3.Session:
         """
         Get refreshable boto3 session.
         """
@@ -148,13 +145,14 @@ class BotoSession:
 
 
 #created bucket to write decrypted data into it
-def create_bucket(bucket_name):
-    '''bucket_name: string
+def create_bucket(bucket_name, region_name):
+    '''
+    bucket_name: string
     '''
     s3 = boto3.client('s3')
     res = s3.create_bucket(Bucket=bucket_name,
                             CreateBucketConfiguration={
-                                'LocationConstraint': 'us-east-2'})
+                                'LocationConstraint': region_name})
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(bucket_name)
     if bucket.creation_date:
@@ -162,10 +160,11 @@ def create_bucket(bucket_name):
     else:
         return False
        
-#print(create_bucket('your-bucket-name'))
+#print(create_bucket('your-bucket-name','region'))
 
 def bucket_list():
-    '''# Returns a list of all buckets owned by the authenticated sender of the request.
+    '''
+    # Returns a list of all buckets owned by the authenticated sender of the request.
     '''
     s3_client = boto3.client('s3')
     buckets = s3_client.list_buckets()
@@ -207,13 +206,13 @@ def get_objects(bucket_name,filter_keys,client):
 #filenames = get_objects('nextgenbmi-cms-test')
 #print(filenames)
 
-def get_secret_password(bucket_name, filter_keys,session,client):  
+def get_secret_password(bucket_name, filter_keys,session,client,region_name):  
     '''
     bucket_name: dictionary, created by
     returns dictionary: key is filename, value is secret password
     '''
-    session = session#boto3.session.Session()
-    client_sm = session.client(service_name='secretsmanager',region_name="us-east-2")
+    session = session #boto3.session.Session()
+    client_sm = session.client(service_name='secretsmanager',region_name=region_name)
     filenames = get_objects(bucket_name, filter_keys,client)
    
     #build secret names from folder names in s3 bucket
@@ -241,8 +240,6 @@ def get_secret_password(bucket_name, filter_keys,session,client):
    
     return pass_dict
 #pass_dict: {'cms-R5900-key': 'pass', 'cms-7209-key': 'pass'}
-
-
 
 def object_length(bucket_name, key,client):
     '''
@@ -323,10 +320,12 @@ def bucket_size(bucket_name):
     return size
     
 if __name__ == '__main__':
+
+    config_data = json.load(open(file="../config.json",encoding = "utf-8"))
     
     def promt_user():
-        read_bucket = "nextgenbmi-upload-cms"
-        write_bucket = "nextgenbmi-snowpipe-master"
+        read_bucket = config_data["aws"]["s3_bucket_source"]
+        write_bucket = config_data["aws"]["s3_bucket_target"]
         print("\n The Bucket You Are Reading From Is : ", read_bucket)
         print("\n The Bucket You Are Writing To Is : ", write_bucket)
         return [read_bucket,write_bucket]
@@ -344,7 +343,7 @@ if __name__ == '__main__':
         plt.savefig('run_time.png')
         
     def main():
-        session = BotoSession().refreshable_session()
+        session = BotoSession(region=config_data["aws"]["region"]).refreshable_session()
         client = session.client("s3") 
         #credentials = session.get_credentials()
         #ACCESS_KEY = credentials.access_key  
@@ -362,7 +361,7 @@ if __name__ == '__main__':
         os.chdir("./data")
            
         # s3 buckets which contain executable objects
-        filter_keys = ['R5894', 'R5900', 'R6326', 'R7209', 'R7719', 'R7921', 'R7925','R8330', 'R8710', 'R9012']
+        filter_keys = config_data["cms_file_key"]
         #keys_ elements allow to access the content
         keys_ = []
         filenames = get_objects(READ_BUCKET,filter_keys,client)
@@ -374,7 +373,7 @@ if __name__ == '__main__':
         #keys_: 'R5900/res000050354req005900_2011_HSPC_SPAN'
 
         # get passwords
-        pass_dict = get_secret_password(READ_BUCKET,filter_keys,session,client)
+        pass_dict = get_secret_password(READ_BUCKET,filter_keys,session,client,config_data["aws"]["region"])
 
         content_size = {} # collects size of aws objects/files
         for key in keys_:

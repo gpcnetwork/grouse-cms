@@ -4,7 +4,6 @@
 # File: dispensing_ddl.sql                                                 
 # DDL script for initializing intermediate and resulting tables:                                               
 # - PRIVATE_DISPENSING
-# - PRIVATE_DISPENSING_STAGE
 */
 
 -- initialize table
@@ -25,20 +24,4 @@ create or replace table PRIVATE_DISPENSING (
     ,RAW_DISPENSE_DOSE_DISP_UNIT varchar(50) NULL
     ,RAW_DISPENSE_ROUTE varchar(50) NULL
     ,primary key (DISPENSINGID)
-);
--- initialize staging table
-use schema CMS_PCORNET_CDM_STAGING;
-create table PRIVATE_DISPENSING_STAGE (
-     PDE_ID varchar(50) NOT NULL
-	,BENE_ID varchar(20) NOT NULL
-    ,PRSCRBID varchar(20) NOT NULL
-    ,SRVC_DT date
-	,PRDSRVID varchar(15)
-	,DAYSSPLY integer
-	,QTYDSPNS integer
-	,STR varchar(50)
-	,GCDF varchar(50)
-	,GCDF_DESC varchar(50)
-	,SRC_SCHEMA varchar(20)
-	,SRC_TABLE varchar(30)
 );
