@@ -1,4 +1,4 @@
-# GPC Reusable Observable Unified Study Environment -- Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
+# Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
 
 ## Greater Plain Collaborative (GPC)
 GPC is a network of 12 leading medical centers covering a diverse population of over 19 million patients across 9 states as part of the National Patient-Centered Clinical Research Network (PCORnet). http://gpcnetwork.org/

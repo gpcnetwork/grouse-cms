@@ -69,7 +69,7 @@ with snowflake_conn as conn:
         load.SfExec_ScriptsFromFile(conn.cursor(),f'./dml/{cdm_tbl}_stg_dml.sql')
         load.SfExec_EnvSetup(conn.cursor(),config_data["snowflake_c2p_main"])
         load.SfExec_ScriptsFromFile(conn.cursor(),f'./dml/{cdm_tbl}_dml.sql',config_data["snowflake_c2p_stg"]["env_schema"])
-    # don't change the order, as there are some dependencies
+    # don't change the order, as there are some dependencies (e.g. diagnosis table depends on the encounter table)
     stage_and_transform("enrollment")
     stage_and_transform("demographic")
     stage_and_transform("death")
