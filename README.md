@@ -28,16 +28,14 @@ To improve interoperatability, we have implemented a process of transforming sou
 
 [res/c2p_transformation_diagram.png]
 
-#### Option A: stepwise transformation
-Run parts of the `c2p/transform_step.py` on the configured developer environment. You may want to start with running the transformation step by step to identify and fix any bugs should there be any. The script consist of three parts: 
+Run parts of the `c2p/transform.py` on the configured developer environment. You may want to start with running the transformation step by step to identify and fix any bugs should there be any. The script consist of three parts: 
 1) create table shells by running the DDL (data definition lanugaue) scripts in `./src/ddl`; 
 2) load reference concept mapping tables pre-loaded in `./ref/` folder; 
 3) run stored procedures in `./src/stored_procedures` for staging and transformation; 
 3) stage source CMS tables in the staging area in a 1-to-1 fashion (i.e. 1 source table to 1 target table), including applying all the mapping tables and creating de-duplication indices (`./src/dml`); 
 4) perform the final transformation step and write to target CDM table (`./src/dml`).  
 
-#### Option B: one-time transformation
-For fully automated transformation, you can also run `c2p/transform_full.py` on the configured developer environment, which runs all the steps mentioned above without requiring any human intervention. However, we would recommend running the stepwise transformation at least once to validate the underlying sql scripts.     
+For fully automated transformation, you can run `c2p/transform.py` on the configured developer environment without commenting out any steps, which runs all the steps mentioned above without requiring any human intervention. However, we would recommend running the stepwise transformation at least once to validate the underlying sql scripts.     
 
 
 ---------------------------------------------------------------------------------------------------
