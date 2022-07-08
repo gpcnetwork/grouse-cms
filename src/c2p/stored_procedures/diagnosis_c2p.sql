@@ -11,10 +11,6 @@ returns variant
 language javascript
 as
 $$
-/**stage encounter table from different CMS table
- * @param {string} SRC_SCHEMA: source schema for staging
-**/
-
 // collect columns from target cdm encounter table
 var collate_tgt_col = snowflake.createStatement({
     sqlText: `SELECT listagg(column_name,',') as enc_col
@@ -29,7 +25,7 @@ var cols_tgt = global_cols.getColumnValue(1).split(",");
 var subset_clause = (SRC_SCHEMA === undefined) ? '': `WHERE a.src_schema = '` + SRC_SCHEMA + `'`;
 
 // step 1 - MEDPAR claims
-var t1_qry = `INSERT INTO private_diagnosis
+var t1_qry = `INSERT INTO diagnosis
               SELECT a.bene_id||'|'||a.medparid||'|'||a.dgns_idx||a.dgns_mod
                     ,a.bene_id
                     ,a.medparid
@@ -41,8 +37,8 @@ var t1_qry = `INSERT INTO private_diagnosis
                           WHEN a.sslssnf = 'N' THEN COALESCE(a.cvrlvldt,a.dschrgdt,a.qlfythru)
                           ELSE NVL(a.dschrgdt,a.qlfythru) END
                     ,a.orgnpinm
-                    ,CASE WHEN a.dx_type = '09' OR a.admsndt < '2015-10-01' THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
-                          WHEN a.dx_type in ('0','10') OR a.admsndt >= '2015-10-01' THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4) 
+                    ,CASE WHEN (a.dx_type = '09' OR a.admsndt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                          WHEN (a.dx_type in ('0','10') OR a.admsndt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4) 
                           ELSE a.dx END
                     ,CASE WHEN a.admsndt >= '2015-10-01' THEN '10' ELSE '09' END
                     ,a.dx_source
@@ -58,7 +54,7 @@ var t1_qry = `INSERT INTO private_diagnosis
 var run_t1_qry = snowflake.createStatement({sqlText: t1_qry});
 
 // step 2 - OUTPATIENT, HHA, HOSPICE claims 
-var t2_qry = `INSERT INTO private_diagnosis
+var t2_qry = `INSERT INTO diagnosis
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||a.clm_id||'|'||a.dgns_idx||a.dgns_mod
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -66,8 +62,8 @@ var t2_qry = `INSERT INTO private_diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.at_npi
-                     ,CASE WHEN a.dx_type = '9' OR a.from_dt < '2015-10-01' THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
-                           WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                           WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
                      ,'FI'
@@ -80,13 +76,13 @@ var t2_qry = `INSERT INTO private_diagnosis
                      ,a.pdx
                      ,a.dx_poa
              FROM CMS_PCORNET_CDM_STAGING.private_diagnosis_stage_outpatient a  
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND 
                 a.thru_dt BETWEEN b.admit_date and b.discharge_date
              `+ subset_clause +`;`;
 var run_t2_qry = snowflake.createStatement({sqlText: t2_qry});
                 
-var t3_qry = `INSERT INTO private_diagnosis
+var t3_qry = `INSERT INTO diagnosis
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||a.clm_id||'|'||a.dgns_idx||a.dgns_mod
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -94,8 +90,8 @@ var t3_qry = `INSERT INTO private_diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.at_npi
-                     ,CASE WHEN a.dx_type = '9' OR a.from_dt < '2015-10-01' THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
-                           WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                           WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
                      ,'FI'
@@ -108,13 +104,13 @@ var t3_qry = `INSERT INTO private_diagnosis
                      ,a.pdx
                      ,a.dx_poa
              FROM CMS_PCORNET_CDM_STAGING.private_diagnosis_stage_hha a 
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND 
                 a.thru_dt BETWEEN b.admit_date and b.discharge_date
              `+ subset_clause +`;`;
 var run_t3_qry = snowflake.createStatement({sqlText: t3_qry});
 
-var t4_qry = `INSERT INTO private_diagnosis
+var t4_qry = `INSERT INTO diagnosis
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||a.clm_id||'|'||a.dgns_idx||a.dgns_mod
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -122,8 +118,8 @@ var t4_qry = `INSERT INTO private_diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.at_npi
-                     ,CASE WHEN a.dx_type = '9' OR a.from_dt < '2015-10-01' THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
-                           WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                           WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
                      ,'FI'
@@ -136,14 +132,14 @@ var t4_qry = `INSERT INTO private_diagnosis
                      ,a.pdx
                      ,a.dx_poa
              FROM CMS_PCORNET_CDM_STAGING.private_diagnosis_stage_hospice a 
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND 
                 a.thru_dt BETWEEN b.admit_date and b.discharge_date
              `+ subset_clause +`;`;
 var run_t4_qry = snowflake.createStatement({sqlText: t4_qry});
 
 // step 3 - BCARRIER, DME claims
-var t5_qry = `INSERT INTO private_diagnosis
+var t5_qry = `INSERT INTO diagnosis
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||a.clm_id||'|'||a.dgns_idx||a.dgns_mod
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -151,8 +147,8 @@ var t5_qry = `INSERT INTO private_diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.rfr_npi
-                     ,CASE WHEN a.dx_type = '9' OR a.from_dt < '2015-10-01' THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
-                           WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                           WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
                      ,'FI'
@@ -165,13 +161,13 @@ var t5_qry = `INSERT INTO private_diagnosis
                      ,a.pdx
                      ,'HC:NI'
              FROM CMS_PCORNET_CDM_STAGING.private_diagnosis_stage_bcarrier a
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND 
                 a.thru_dt BETWEEN b.admit_date and b.discharge_date
              `+ subset_clause +`;`;
 var run_t5_qry = snowflake.createStatement({sqlText: t5_qry});
 
-var t6_qry = `INSERT INTO private_diagnosis
+var t6_qry = `INSERT INTO diagnosis
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||a.clm_id||'|'||a.dgns_idx||a.dgns_mod
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -179,8 +175,8 @@ var t6_qry = `INSERT INTO private_diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.rfr_npi
-                     ,CASE WHEN a.dx_type = '9' OR a.from_dt < '2015-10-01' THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
-                           WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                           WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
                      ,'FI'
@@ -193,7 +189,7 @@ var t6_qry = `INSERT INTO private_diagnosis
                      ,a.pdx
                      ,'HC:NI'
              FROM CMS_PCORNET_CDM_STAGING.private_diagnosis_stage_dme a 
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND 
                 a.thru_dt BETWEEN b.admit_date and b.discharge_date
              `+ subset_clause +`;`;
@@ -218,4 +214,3 @@ run_t6_qry.execute();
 commit_txn.execute();
 $$
 ;
-
