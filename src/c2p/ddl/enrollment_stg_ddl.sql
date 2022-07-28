@@ -13,6 +13,8 @@
 create or replace table PRIVATE_ENROLLMENT_STAGE_AB (
     BENE_ID varchar(50) NOT NULL,
     RFRNC_YR varchar(5) NOT NULL,
+    OREC VARCHAR(2),
+	CREC VARCHAR(2),
     BUYIN01 varchar(1) NULL,
     BUYIN02 varchar(1) NULL,
     BUYIN03 varchar(1) NULL, 
@@ -45,6 +47,8 @@ create or replace table PRIVATE_ENROLLMENT_STAGE_AB (
 create or replace table PRIVATE_ENROLLMENT_STAGE_C (
     BENE_ID varchar(50) NOT NULL,
     RFRNC_YR varchar(5) NOT NULL,
+    OREC VARCHAR(2),
+	CREC VARCHAR(2),
     PTCCNTRCT01 varchar(5) NULL,
     PTCCNTRCT02 varchar(5) NULL,
     PTCCNTRCT03 varchar(5) NULL,

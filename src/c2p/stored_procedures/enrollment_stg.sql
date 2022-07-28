@@ -11,11 +11,6 @@ returns variant
 language javascript
 as
 $$
-/**stage encounter table from different CMS table
- * @param {string} SRC_SCHEMA: source schema for staging
- * @param {string} PART: part name of source table
-**/
-
 // generate "select" statement based on conditions
 var get_tbl = snowflake.createStatement({
     sqlText: `SELECT table_schema, table_name,
@@ -47,7 +42,7 @@ while (tables.next())
         });
         // assume staging table columes (ordered as they appear in source table) are aligned with cols_ab_local
         stg_pt_qry += `INSERT INTO private_enrollment_stage_ab
-                       SELECT bene_id, rfrnc_yr,`+ cols_ab_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD')
+                       SELECT bene_id, rfrnc_yr, orec, crec,`+ cols_ab_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD') 
                        FROM `+ SRC_SCHEMA +`.`+ table +`;`;
        
     } else if (PART.includes('C') && table.includes('_ABC')) {
@@ -56,7 +51,7 @@ while (tables.next())
         });
         // assume staging table columes (ordered as they appear in source table) are aligned with cols_c_local
         stg_pt_qry += `INSERT INTO private_enrollment_stage_c
-                       SELECT bene_id, rfrnc_yr,`+ cols_c_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD')
+                       SELECT bene_id, rfrnc_yr, orec, crec,`+ cols_c_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD')
                        FROM `+ SRC_SCHEMA +`.`+ table +`;`;
                                
     } else if (PART.includes('D') && table.includes('D_')) {
@@ -67,7 +62,7 @@ while (tables.next())
         if (table.includes('_ABCD_')){
             cols_d_local = cols_d_local.filter(value => {
                 return value.includes('PTD') || value.includes('RDSIND')})
-        }; 
+        };
         // assume staging table columes (ordered as they appear in source table) are aligned with cols_d_local 
         stg_pt_qry += `INSERT INTO private_enrollment_stage_d
                        SELECT bene_id, rfrnc_yr,`+ cols_d_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD')

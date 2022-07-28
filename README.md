@@ -1,5 +1,3 @@
-# Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
-
 ## Greater Plain Collaborative (GPC)
 GPC is a network of 12 leading medical centers covering a diverse population of over 19 million patients across 9 states as part of the National Patient-Centered Clinical Research Network (PCORnet). http://gpcnetwork.org/
 
@@ -11,6 +9,7 @@ GROUSE is a GPC project (as well as name of the data enclave) to obtain health i
 ## Medicare Research Identifiable Files (RIF)
 Currently, the GPC coordinating center (GPC CC) recieves Medicare RIF files via windows compatible delivery media (i.e. USB hard drive, DVD, CD) from CMS chronic condition warehouse (CCW), or NewWave-GDIT, by mail. The raw files are in a compressed and encrypted format, called [Self-Decrypting Archives (SDAs)](https://innovation.cms.gov/files/x/bundled-payments-for-care-improvement-learning-area-size-info-doc.pdf). SDAs are stand-along executables that can only be decrypted and decompressed with encryption keys sent from CMS to GPC CC in separate secured email. After decryption and decompression each SDA executable, the actual data file (`.dat`) and the metadata file (`.fts`) and two additional (`.sas`) files were made available for downstream processing. GPC CC has implementated an ETL process leveraging the following key resources: AWS S3 bucket, AWS IAM, AWS Secret Manager, and Snowflake database. 
 
+## Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
 ### Extract and Load 
 As shown in the architecture below:
 

@@ -37,7 +37,7 @@ var t1_qry = `INSERT INTO diagnosis
                           WHEN a.sslssnf = 'N' THEN COALESCE(a.cvrlvldt,a.dschrgdt,a.qlfythru)
                           ELSE NVL(a.dschrgdt,a.qlfythru) END
                     ,a.orgnpinm
-                    ,CASE WHEN (a.dx_type = '09' OR a.admsndt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                    ,CASE WHEN (a.dx_type = '09' OR a.admsndt < '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
                           WHEN (a.dx_type in ('0','10') OR a.admsndt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4) 
                           ELSE a.dx END
                     ,CASE WHEN a.admsndt >= '2015-10-01' THEN '10' ELSE '09' END
@@ -62,7 +62,7 @@ var t2_qry = `INSERT INTO diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.at_npi
-                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
                            WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
@@ -90,7 +90,7 @@ var t3_qry = `INSERT INTO diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.at_npi
-                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
                            WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
@@ -118,7 +118,7 @@ var t4_qry = `INSERT INTO diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.at_npi
-                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
                            WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
@@ -147,7 +147,7 @@ var t5_qry = `INSERT INTO diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.rfr_npi
-                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
                            WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
@@ -175,7 +175,7 @@ var t6_qry = `INSERT INTO diagnosis
                      ,NVL(b.admit_date,a.thru_dt)
                      ,a.thru_dt
                      ,a.rfr_npi
-                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 2 THEN SUBSTR(a.dx,1,2+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,3+REGEXP_INSTR(a.dx,'E'))
+                     ,CASE WHEN (a.dx_type = '9' OR a.from_dt < '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3+REGEXP_INSTR(a.dx,'E'))||'.'||SUBSTR(a.dx,4+REGEXP_INSTR(a.dx,'E'))
                            WHEN (a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01') AND LEN(a.dx) > 3 THEN SUBSTR(a.dx,1,3)||'.'||SUBSTR(a.dx,4)
                            ELSE a.dx END
                      ,CASE WHEN a.dx_type in ('0','10') OR a.from_dt >= '2015-10-01' THEN '10' ELSE '09' END
@@ -214,3 +214,4 @@ run_t6_qry.execute();
 commit_txn.execute();
 $$
 ;
+
