@@ -1,15 +1,18 @@
-## Greater Plain Collaborative (GPC)
-GPC is a network of 12 leading medical centers covering a diverse population of over 19 million patients across 9 states as part of the National Patient-Centered Clinical Research Network (PCORnet). http://gpcnetwork.org/
+# GPC Reusable Observable Study Environment (GROUSE)
+The Greater Plains Collaborative Clinical Data Research Networks (GPC CDRNs), is one of the 11 CDRNs included in PCORnet to further goals of the learning Health System and help to answer questions that are important to patient, clinician, and health system stakeholders. Current GPC includes 12 leading medical centers in 11 states (Kansas, Missouri, Iowa, Wisconsin, Nebraska, Minnesota, Texas, Utah, South Dakota, North Dakota and Indiana) committed to a shared vision of improving healthcare delivery through ongoing learning, adoption of evidence - based practices, and active research dissemination.
 
-## GPC Reusable Observable Study Environment (GROUSE)
-GROUSE is a GPC project (as well as name of the data enclave) to obtain health insurance claims from the Center for Medicare and Medicaid Services through the Research Data Assistance Center (ResDAC) at the University of Minnesota. We currently have 2011-2017 Medicare data and 2011-2012 Medicaid data from 9 states in the GPC. To acknowlege the usage of GROUSE data, please include the following citation in your publication: 
+In order to understand all types of care a patient receives without being restricted to specific health systems, the GPC Reusable Observable Unified Study Environment (GROUSE) – a de-identified data resource, is created by merging CMS claims (covering the entire 11 states) with GPC site EMR data. GPC CDRN selected three types of conditions - one rare disease (amyotrophic lateral sclerosis), one common disease (breast cancer), and obesity, to a) quantify completeness of the health system-derived data repositories; and b) evaluate the distributions of health and care processes for the patients within the GPC versus the larger Medicare and Medicaid populations in our region to understand how studies of the GPC population generalize to the broader populations in our states. To acknowlege the usage of GROUSE data, please include the following citation in your publication: 
 
-*Lemuel R Waitman, Xing Song, Dammika Lakmal Walpitage, Daniel C Connolly, Lav P Patel, Mei Liu, Mary C Schroeder, Jeffrey J VanWormer, Abu Saleh Mosa, Ernest T Anye, Ann M Davis, Enhancing PCORnet Clinical Research Network data completeness by integrating multistate insurance claims with electronic health records in a cloud environment aligned with CMS security and privacy requirements, Journal of the American Medical Informatics Association, 2021;, ocab269, https://doi.org/10.1093/jamia/ocab269*
+```
+*Lemuel R Waitman, Xing Song, Dammika Lakmal Walpitage, Daniel C Connolly, Lav P Patel, Mei Liu, Mary C Schroeder, Jeffrey J VanWormer, Abu Saleh Mosa, Ernest T Anye, Ann M Davis,
+ Enhancing PCORnet Clinical Research Network data completeness by integrating multistate insurance claims with electronic health records in a cloud environment aligned with CMS
+ security and privacy requirements, Journal of the American Medical Informatics Association, 2021;, ocab269, https://doi.org/10.1093/jamia/ocab269*
+```
 
-## Medicare Research Identifiable Files (RIF)
+# Medicare Research Identifiable Files (RIF)
 Currently, the GPC coordinating center (GPC CC) recieves Medicare RIF files via windows compatible delivery media (i.e. USB hard drive, DVD, CD) from CMS chronic condition warehouse (CCW), or NewWave-GDIT, by mail. The raw files are in a compressed and encrypted format, called [Self-Decrypting Archives (SDAs)](https://innovation.cms.gov/files/x/bundled-payments-for-care-improvement-learning-area-size-info-doc.pdf). SDAs are stand-along executables that can only be decrypted and decompressed with encryption keys sent from CMS to GPC CC in separate secured email. After decryption and decompression each SDA executable, the actual data file (`.dat`) and the metadata file (`.fts`) and two additional (`.sas`) files were made available for downstream processing. GPC CC has implementated an ETL process leveraging the following key resources: AWS S3 bucket, AWS IAM, AWS Secret Manager, and Snowflake database. 
 
-## Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
+# Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
 The extract, load and transform (ELT) process can be summarised in the diagram below
 
 ![res/elt_workflow.png]
@@ -28,8 +31,7 @@ To improve interoperatability, we have implemented a process of transforming sou
 - [c2p transform - enrollment](res/c2p_transform_enrollment.png)
 - [c2p transform - demographic](res/c2p_transform_demographic.png)
 - [c2p transform - death](res/c2p_transform_death.png)
-- [c2p transform - lds_address_history](res/c2p_transform_- [c2p transform - lds_address_history](res/c2p_transform_enrollment.png)
-.png)
+- [c2p transform - lds_address_history](res/c2p_transform_lds_address_history.png)
 - [c2p transform - encounter](res/c2p_transform_encounter.png)
 - [c2p transform - diagnosis](res/c2p_transform_diagnosis.png)
 - [c2p transform - procedures](res/c2p_transform_procedures.png)
