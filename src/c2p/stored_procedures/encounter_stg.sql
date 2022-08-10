@@ -7,14 +7,13 @@
 #               CDM ENCOUNTER table transformation
 */
 
-create or replace procedure stage_encounter(SRC_SCHEMA STRING, PART STRING)
+create or replace procedure stage_encounter(SRC_SCHEMA STRING)
 returns variant
 language javascript
 as
 $$
 /**stage encounter table from different CMS table
  * @param {string} SRC_SCHEMA: source schema for staging
- * @param {string} PART: part name of source table
 **/
 
 // collect columns from target cdm encounter table
@@ -36,7 +35,7 @@ while (tables.next())
     var cols_raw = cols_var.filter(value =>{return !value.includes('MT_')});
     let stg_pt_qry = '';
 
-    if (table.includes('MEDPAR') && (table.include(PART)||(PART===undefined))) {
+    if (table.includes('MEDPAR')) {
         cols_raw = cols_raw.map(value =>{return 'mpa.' + value});
         stg_pt_qry += `INSERT INTO `+ table +`(`+ cols_var +`,src_schema,src_table,dedup_index)
                        WITH cmap as (
@@ -57,7 +56,7 @@ while (tables.next())
                               ,coalesce(sr2sr.ADMITTING_SOURCE,'NI') AS mt_admitting_source
                               ,coalesce(p2p.PAYER_TYPE_PRIMARY,'NI') AS mt_payer_type_primary
                               ,coalesce(p2p.PAYER_TYPE_SECONDARY,'NI') AS mt_payer_type_secondary
-                        FROM `+ SRC_SCHEMA +`.MEDPAR_ALL mpa
+                        FROM ` + SRC_SCHEMA + `.MEDPAR_ALL mpa
                         LEFT JOIN CONCEPT_MAPPINGS.PRVDNUM2FACTYPE p2f on TRY_TO_NUMERIC(RIGHT(mpa.PRVDRNUM,4)) between p2f.PRVDRNUM_LB and p2f.PRVDRNUM_UB
                         LEFT JOIN CONCEPT_MAPPINGS.STUS2STUS st2st on mpa.DSTNTNCD = st2st.STUSCD
                         LEFT JOIN CONCEPT_MAPPINGS.SRCADMS2SRCADMS sr2sr on mpa.SRC_ADMS = sr2sr.SRCADMS
@@ -67,7 +66,7 @@ while (tables.next())
                               ROW_NUMBER() OVER (PARTITION BY bene_id, mt_enc_type, admsndt ORDER BY prpay_cd, mt_discharge_date desc) dedup_index
                        FROM cmap;`;
                         
-    } else if (table.includes('OUTPATIENT') && (table.include(PART)||(PART===undefined))) {
+    } else if (table.includes('OUTPATIENT')) {
         cols_raw = cols_raw.map(value =>{return 'op.' + value});
         stg_pt_qry += `INSERT INTO `+ table +`(`+ cols_var +`,src_schema,src_table,dedup_index)
                        WITH ed_rev_cntr AS (
@@ -121,7 +120,7 @@ while (tables.next())
                               ROW_NUMBER() OVER (PARTITION BY bene_id, mt_enc_type, from_dt ORDER BY prpay_cd, mt_discharge_date desc) dedup_index
                        FROM cmap;`;
                                     
-    } else if ((table.includes('HHA') || table.includes('HOSPICE')) && (table.include(PART)||(PART===undefined))) {
+    } else if (table.includes('HHA') || table.includes('HOSPICE')) {
         var tbl_prefix = table.includes('HHA') ? 'HHA' : 'HOSPICE';
         cols_raw = cols_raw.map(value =>{return 'inst.' + value});
         stg_pt_qry += `INSERT INTO `+ table +`(`+ cols_var +`,src_schema,src_table,dedup_index)
@@ -144,12 +143,13 @@ while (tables.next())
                               ROW_NUMBER() OVER (PARTITION BY bene_id, mt_enc_type, from_dt ORDER BY prpay_cd, thru_dt DESC) dedup_index
                        FROM cmap;`;
                         
-    } else if ((table.includes('BCARRIER') || table.includes('DME')) && (table.include(PART)||(PART===undefined))) {
+    } else if (table.includes('BCARRIER') || table.includes('DME')) {
         var tbl_prefix = table.includes('BCARRIER') ? 'BCARRIER' : 'DME';
-        cols_raw = cols_raw.map(value =>{return 'line.' + value});
+        cols_line = cols_raw.filter(value => {return !value.includes('RFR_NPI') && !value.includes('ORG_NPI')}).map(value =>{return 'line.' + value});
+        cols_clm = cols_raw.filter(value => {return value.includes('RFR_NPI') || value.includes('ORG_NPI')}).map(value =>{return 'clm.' + value});
         stg_pt_qry += `INSERT INTO `+ table +`(`+ cols_var +`,src_schema,src_table,dedup_index)
                        WITH cmap AS (
-                        SELECT `+ cols_raw +`, clm.from_dt,
+                        SELECT `+ cols_line +`,`+ cols_clm +`, clm.from_dt
                               ,COALESCE(p2e.ENC_TYPE,'NI') AS mt_enc_type
                               ,COALESCE(p2f.FACILITY_TYPE, 'NI') AS mt_facility_type
                               ,COALESCE(p2p.PAYER_TYPE_PRIMARY,'NI') AS mt_payer_type_primary
@@ -166,7 +166,13 @@ while (tables.next())
     } else {
         continue;
     }
-    
+    /**
+    // preview of the generated dynamic SQL scripts - comment it out when perform actual execution
+       var log_stmt = snowflake.createStatement({
+                        sqlText: `INSERT INTO dev.sp_output (qry) values (:1);`,
+                        binds: [stg_pt_qry]});
+       log_stmt.execute(); 
+    **/
     // run dynamic dml query
     var add_new = snowflake.createStatement({sqlText: stg_pt_qry});
     var commit_txn = snowflake.createStatement({sqlText: `commit;`});
@@ -175,6 +181,4 @@ while (tables.next())
 }            
 $$
 ;
-
-
 

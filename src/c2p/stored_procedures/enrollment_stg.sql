@@ -23,7 +23,10 @@ var get_tbl = snowflake.createStatement({
                        column_name like '%HMOIND%' OR
                        column_name like '%CNTRCT%' OR
                        column_name like '%PBP%ID%' OR
-                       column_name like '%RDS%IND%')
+                       column_name like '%RDS%IND%' OR
+                       column_name like '%CSTSHR%' OR
+                       (column_name like '%DUAL%' AND column_name not like '%DUAL%MO%')
+                       )
                 GROUP BY table_schema, table_name;`,
      binds: [SRC_SCHEMA]});
 var tables = get_tbl.execute();
@@ -36,7 +39,7 @@ while (tables.next())
     var cols_var = tables.getColumnValue(3);
     let stg_pt_qry = '';
     
-    if (PART.includes('AB') && table.includes('_AB')){
+    if (PART == 'AB' && table.includes('_AB')){
         const cols_ab_local = cols_var.split(",").filter(value => {
             return value.includes('BUYIN') || value.includes('HMOIND')
         });
@@ -45,7 +48,7 @@ while (tables.next())
                        SELECT bene_id, rfrnc_yr, orec, crec,`+ cols_ab_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD') 
                        FROM `+ SRC_SCHEMA +`.`+ table +`;`;
        
-    } else if (PART.includes('C') && table.includes('_ABC')) {
+    } else if (PART == 'C' && table.includes('_ABC')) {
         const cols_c_local = cols_var.split(",").filter(value => {
             return (value.includes('CNTRCT') || value.includes('PBP')) && value.includes('PTC')
         });
@@ -54,7 +57,7 @@ while (tables.next())
                        SELECT bene_id, rfrnc_yr, orec, crec,`+ cols_c_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD')
                        FROM `+ SRC_SCHEMA +`.`+ table +`;`;
                                
-    } else if (PART.includes('D') && table.includes('D_')) {
+    } else if (PART == 'D' && table.includes('D_')) {
         var cols_d_local = cols_var.split(",").filter(value => {
                 return value.includes('CNTRCT') || value.includes('PBP') || value.includes('RDSIND')
         });
@@ -66,6 +69,24 @@ while (tables.next())
         // assume staging table columes (ordered as they appear in source table) are aligned with cols_d_local 
         stg_pt_qry += `INSERT INTO private_enrollment_stage_d
                        SELECT bene_id, rfrnc_yr,`+ cols_d_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD')
+                       FROM `+ SRC_SCHEMA +`.`+ table +`;`;   
+                       
+    } else if (PART =='DUAL' && table.includes('D_')) {
+        var cols_dual_local = cols_var.split(",").filter(value => {
+                return value.includes('DUAL')
+        });
+        // assume staging table columes (ordered as they appear in source table) are aligned with cols_d_local 
+        stg_pt_qry += `INSERT INTO private_enrollment_stage_dual
+                       SELECT bene_id, rfrnc_yr,`+ cols_dual_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD')
+                       FROM `+ SRC_SCHEMA +`.`+ table +`;`; 
+                       
+    } else if (PART == 'LIS' && table.includes('D_')) {
+        var cols_lis_local = cols_var.split(",").filter(value => {
+                return value.includes('CSTSHR')
+        });
+        // assume staging table columes (ordered as they appear in source table) are aligned with cols_d_local 
+        stg_pt_qry += `INSERT INTO private_enrollment_stage_lis
+                       SELECT bene_id, rfrnc_yr,`+ cols_lis_local +`,'`+ SRC_SCHEMA +`','`+ table +`',to_date(replace(rfrnc_yr,',','') || '1231', 'YYYYMMDD')
                        FROM `+ SRC_SCHEMA +`.`+ table +`;`;   
     } else {
         continue;

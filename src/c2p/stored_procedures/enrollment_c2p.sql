@@ -7,23 +7,19 @@
 ref: https://github.com/kumc-bmi/grouse/blob/master/etl_i2b2/sql_scripts/cms_enr_dstats.sql
 ref: https://resdac.org/articles/identifying-medicare-managed-care-beneficiaries-master-beneficiary-summary-or-denominator
 */
-create or replace procedure transform_to_enrollment(PART STRING, STG_SCHEMA STRING)
+create or replace procedure transform_to_enrollment(PART STRING)
 returns variant
 language javascript
 as
 $$
-/**stage encounter table from different CMS table
- * @param {string} PART: part name of source enrollment/denominator table
-**/
-
 // generate "select" statement based on conditions
 var collate_col_stmt = snowflake.createStatement({
     sqlText: `SELECT table_name, listagg(column_name,',') within group (ORDER BY column_name) as cols  
                 FROM information_schema.columns 
                 WHERE table_catalog = 'GROUSE_DB'
-                  AND table_schema = '`+ STG_SCHEMA +`' 
+                  AND table_schema = 'CMS_PCORNET_CDM_STAGING' 
                   AND table_name like '%ENROLLMENT%STAGE%'
-                  AND table_name like '%`+ PART +`%'
+                  AND table_name like '%`+ PART +`'
                 GROUP BY table_name;`});
 var global_cols = collate_col_stmt.execute(); global_cols.next();
 var table = global_cols.getColumnValue(1);
@@ -31,15 +27,15 @@ var cols = global_cols.getColumnValue(2);
 let t_qry = '';
 
 // generate dynamic dml query
-if (PART.includes('AB')){
+if (PART =='AB'){
     const cols_buyin = cols.split(",").filter(value => {return value.includes('BUYIN')});
     const cols_hmo = cols.split(",").filter(value => {return value.includes('HMOIND')});
 
-    t_qry += `MERGE INTO private_enrollment t
+    t_qry += `MERGE INTO enrollment t
               USING(
                  WITH per_bene_mo AS (
                     SELECT bene_id, rfrnc_yr, buyin, hmo, right(buyin_mo,2) AS mo
-                    FROM `+ STG_SCHEMA +`.`+ table +`
+                    FROM CMS_PCORNET_CDM_STAGING.`+ table +`
                     -- multi unpivot
                     UNPIVOT 
                      (buyin for buyin_mo in (`+ cols_buyin +`)) buyin_unpvt
@@ -77,15 +73,15 @@ if (PART.includes('AB')){
                 THEN INSERT (PATID,ENR_START_DATE,ENR_END_DATE,CHART,ENR_BASIS,RAW_BASIS) 
                     VALUES (s.bene_id,s.enr_start_date,s.enr_end_date,'Y',s.enr_basis,s.raw_basis);`; 
 
-} else if (PART.includes('C')) {
+} else if (PART == 'C') {
     const cols_ptc = cols.split(",").filter(value => {return value.includes('CNTRCT')});
     const cols_pbp = cols.split(",").filter(value => {return value.includes('PBPID')});
 
-    t_qry += `MERGE INTO private_enrollment t
+    t_qry += `MERGE INTO enrollment t
               USING(
                  WITH per_bene_mo AS (
                     SELECT bene_id, rfrnc_yr, buyin, pbp, right(buyin_mo,2) AS mo
-                    FROM `+ STG_SCHEMA +`.`+ table +`
+                    FROM CMS_PCORNET_CDM_STAGING.`+ table +`
                     -- multi unpivot
                     UNPIVOT 
                      (buyin for buyin_mo in (`+ cols_ptc +`)) buyin_unpvt
@@ -121,16 +117,16 @@ if (PART.includes('AB')){
                 THEN INSERT (PATID,ENR_START_DATE,ENR_END_DATE,CHART,ENR_BASIS,RAW_BASIS) 
                     VALUES (s.bene_id,s.enr_start_date,s.enr_end_date,'Y',s.enr_basis,s.raw_basis);`; 
 
-} else if (PART.includes('D')) {
+} else if (PART == 'D') {
     const cols_ptd = cols.split(",").filter(value => {return value.includes('CNTRCT')});
     const cols_pbp = cols.split(",").filter(value => {return value.includes('PBP')});
     const cols_rds = cols.split(",").filter(value => {return value.includes('RDSIND')});
 
-    t_qry += `MERGE INTO private_enrollment t
+    t_qry += `MERGE INTO enrollment t
               USING(
                  WITH per_bene_mo AS (
                     SELECT bene_id, rfrnc_yr, buyin, pbp, rds, right(buyin_mo,2) AS mo
-                    FROM `+ STG_SCHEMA +`.`+ table +`
+                    FROM CMS_PCORNET_CDM_STAGING.`+ table +`
                     -- multi unpivot
                     UNPIVOT 
                      (buyin for buyin_mo in (`+ cols_ptd +`)) buyin_unpvt
@@ -167,9 +163,99 @@ if (PART.includes('AB')){
                 THEN UPDATE SET t.enr_start_date = s.enr_start_date, t.enr_end_date = s.enr_end_date, t.raw_basis = s.raw_basis
             WHEN NOT MATCHED 
                 THEN INSERT (PATID,ENR_START_DATE,ENR_END_DATE,CHART,ENR_BASIS,RAW_BASIS) 
+                    VALUES (s.bene_id,s.enr_start_date,s.enr_end_date,'Y',s.enr_basis,s.raw_basis);`;   
+                    
+} else if (PART == 'DUAL') {
+    const cols_dual = cols.split(",").filter(value => {return value.includes('DUAL')});
+
+    t_qry += `MERGE INTO enrollment t
+              USING(
+                 WITH per_bene_mo AS (
+                    SELECT bene_id, rfrnc_yr, dual, right(dual_mo,2) AS mo
+                    FROM CMS_PCORNET_CDM_STAGING.`+ table +`
+                    -- unpivot
+                    UNPIVOT 
+                     (dual for dual_mo in (`+ cols_dual +`)) dual_unpvt
+                    WHERE dual not in ('00','09','NA') AND dual is not NULL  -- Not entitled
+                    ), dual_cte_cvg as (
+                    SELECT bene_id, rfrnc_yr, mo, dual,
+                           to_date(replace(rfrnc_yr,',','') || mo, 'YYYYMM') as enroll_mo,
+                           CASE WHEN dual in ('02','04','08') THEN 'F' -- Full
+                                WHEN dual in ('01','03','05','06') THEN 'P' -- Partial
+                                WHEN dual in ('10') THEN 'C' -- CHIP
+                            END AS coverage
+                    FROM per_bene_mo
+                    ), dual_cte_cvg_agg as(
+                    SELECT dual_cte_cvg.*,
+                           DATEADD(month, - DENSE_RANK() OVER (PARTITION BY bene_id ORDER BY enroll_mo) + 1,enroll_mo) series
+                    FROM dual_cte_cvg
+                    WHERE coverage is not NULL
+                    )
+                    SELECT bene_id,
+                           min(enroll_mo) as enr_start_date,
+                           DATEADD(month,1,max(enroll_mo))-1 as enr_end_date,
+                           'I' as enr_basis,
+                           'DUAL|' || LISTAGG(coverage, '') WITHIN GROUP (ORDER BY enroll_mo) as raw_basis
+                    FROM   dual_cte_cvg_agg
+                    GROUP BY bene_id, series
+                  ) s
+            ON t.patid = s.bene_id AND 
+               t.enr_basis = s.enr_basis 
+            WHEN MATCHED AND t.enr_start_date >= s.enr_start_date AND t.enr_end_date <= s.enr_end_date  
+                THEN UPDATE SET t.enr_start_date = s.enr_start_date, t.enr_end_date = s.enr_end_date, t.raw_basis = s.raw_basis
+            WHEN NOT MATCHED 
+                THEN INSERT (PATID,ENR_START_DATE,ENR_END_DATE,CHART,ENR_BASIS,RAW_BASIS) 
+                    VALUES (s.bene_id,s.enr_start_date,s.enr_end_date,'Y',s.enr_basis,s.raw_basis);`;      
+                    
+} else if (PART == 'LIS') {
+    const cols_lis = cols.split(",").filter(value => {return value.includes('CSTSHR')});
+
+    t_qry += `MERGE INTO enrollment t
+              USING(
+                 WITH per_bene_mo AS (
+                    SELECT bene_id, rfrnc_yr, cstshr, right(cstshr_mo,2) AS mo
+                    FROM CMS_PCORNET_CDM_STAGING.`+ table +`
+                    -- multi unpivot
+                    UNPIVOT 
+                     (cstshr for cstshr_mo in (`+ cols_lis +`)) cstshr_unpvt
+                    WHERE cstshr not in ('00','09','NA') AND cstshr is not NULL  -- Not entitled
+                    ), cstshr_cte_cvg as (
+                    SELECT bene_id, rfrnc_yr, mo, cstshr,
+                           to_date(replace(rfrnc_yr,',','') || mo, 'YYYYMM') as enroll_mo,
+                           CASE WHEN cstshr in ('01','02','03') THEN 'F' -- Full
+                                WHEN cstshr in ('04','05','06','07','08') THEN 'P' -- Partial
+                                WHEN cstshr in ('10') THEN 'R' -- employer RDS
+                            END AS coverage
+                    FROM per_bene_mo
+                    ), cstshr_cte_cvg_agg as(
+                    SELECT cstshr_cte_cvg.*,
+                           DATEADD(month, - DENSE_RANK() OVER (PARTITION BY bene_id ORDER BY enroll_mo) + 1,enroll_mo) series
+                    FROM cstshr_cte_cvg
+                    WHERE coverage is not NULL
+                    )
+                    SELECT bene_id,
+                           min(enroll_mo) as enr_start_date,
+                           DATEADD(month,1,max(enroll_mo))-1 as enr_end_date,
+                           'I' as enr_basis,
+                           'LIS|' || LISTAGG(coverage, '') WITHIN GROUP (ORDER BY enroll_mo) as raw_basis
+                    FROM   cstshr_cte_cvg_agg
+                    GROUP BY bene_id, series
+                  ) s
+            ON t.patid = s.bene_id AND 
+               t.enr_basis = s.enr_basis 
+            WHEN MATCHED AND t.enr_start_date >= s.enr_start_date AND t.enr_end_date <= s.enr_end_date  
+                THEN UPDATE SET t.enr_start_date = s.enr_start_date, t.enr_end_date = s.enr_end_date, t.raw_basis = s.raw_basis
+            WHEN NOT MATCHED 
+                THEN INSERT (PATID,ENR_START_DATE,ENR_END_DATE,CHART,ENR_BASIS,RAW_BASIS) 
                     VALUES (s.bene_id,s.enr_start_date,s.enr_end_date,'Y',s.enr_basis,s.raw_basis);`;       
 } 
-
+/**
+// preview of the generated dynamic SQL scripts - comment it out when perform actual execution
+   var log_stmt = snowflake.createStatement({
+                    sqlText: `INSERT INTO dev.sp_output (qry) values (:1);`,
+                    binds: [t_qry]});
+   log_stmt.execute(); 
+**/
 // run dynamic dml query
 var commit_txn = snowflake.createStatement({sqlText: `commit;`});
 var run_transform_dml = snowflake.createStatement({sqlText: t_qry}); 
@@ -177,4 +263,3 @@ run_transform_dml.execute();
 commit_txn.execute();
 $$
 ;
-

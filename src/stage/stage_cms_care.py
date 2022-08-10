@@ -18,7 +18,7 @@ from re import match, sub
 import numpy as np
 import extract
 import load
-from utils import get_objects
+import utils
 
 """
 within snowflake connection context, perform data staging process
@@ -28,7 +28,8 @@ within snowflake connection context, perform data staging process
 ref: https://docs.snowflake.com/en/user-guide/data-load-external-tutorial.html
 """
 
-config_data = json.load(open(file="../config.json",encoding = "utf-8"))
+dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+config_data = json.load(open(file=f'{dir_path}/config.json',encoding = "utf-8"))
 
 #get snowflake connections strings
 user = load.AWSSecrets(secret_name = config_data["aws"]["user_secret"])
@@ -39,7 +40,7 @@ params = config_data["snowflake_cms_stg"]
 #get other aws parameters
 s3_bucket = config_data["aws"]["s3_bucket_target"]
 s3_key = config_data["aws"]["s3_bucket_key"]
-filenames = get_objects(s3_bucket)
+filenames = utils.get_objects(s3_bucket,s3_key)
 
 #mapping to fts file index
 map_fts = [i for  y in filenames[f"{s3_key}dat_files"] for i, x in enumerate(filenames[f"{s3_key}fts_files"]) if match(x.split('.')[0],y.split('.')[0])]
@@ -136,3 +137,5 @@ with snowflake_conn as conn:
         
         #---write benchmark result to .csv
         np.savetxt(file_path, benchmk_data, delimiter = ',',fmt="%s")
+
+utils.pyclean()

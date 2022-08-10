@@ -48,7 +48,17 @@ create or replace table PRIVATE_ENCOUNTER_STAGE_OUTPATIENT (
     -- ,REV_CNTR varchar(5)
     ,FROM_DT date
     ,THRU_DT date
+    ,ORGNPINM varchar(12)
+    ,PRSTATE varchar(3)
+    -- ,SRVC_LOC_NPI_NUM varchar(12) -- doesn't exists prior to 2014
     ,AT_NPI varchar(12)
+    -- ,AT_PHYSN_SPCLTY_CD varchar(3)
+    ,OP_NPI varchar(12)
+    -- ,OP_PHYSN_SPCLTY_CD varchar(3)
+    ,OT_NPI varchar(12) 
+    -- ,OT_PHYSN_SPCLTY_CD varchar(3)
+    -- ,RNDRNG_PHYSN_NPI varchar(12)  -- doesn't exists prior to 2014
+    -- ,RFR_PHYSN_NPI varchar(12)  -- doesn't exists prior to 2014
     ,PROVIDER varchar(10)
     ,FAC_TYPE varchar(2)
     ,TYPESRVC varchar(2)
@@ -72,7 +82,16 @@ create or replace table PRIVATE_ENCOUNTER_STAGE_HHA (
     ,CLM_TYPE varchar(3)
     ,FROM_DT date
     ,THRU_DT date
+    ,ORGNPINM varchar(12)
+    -- ,CLM_SRVC_FAC_ZIP_CD varchar(12) -- doesn't exists prior to 2014
+    ,PRSTATE varchar(3)
+    -- ,SRVC_LOC_NPI_NUM varchar(12) -- doesn't exists prior to 2014
     ,AT_NPI varchar(12)
+    -- ,AT_PHYSN_SPCLTY_CD varchar(3) -- doesn't exists prior to 2014
+    -- ,OP_NPI varchar(12) -- doesn't exists prior to 2014
+    -- ,OT_NPI varchar(12) -- doesn't exists prior to 2014
+    -- ,RNDRNG_PHYSN_NPI varchar(12) -- doesn't exists prior to 2014
+    -- ,RFR_PHYSN_NPI varchar(12) -- doesn't exists prior to 2014
     ,PROVIDER varchar(10)
     ,FAC_TYPE varchar(2)
     ,TYPESRVC varchar(2)
@@ -90,12 +109,20 @@ create or replace table PRIVATE_ENCOUNTER_STAGE_HHA (
 );
 create or replace table PRIVATE_ENCOUNTER_STAGE_HOSPICE like PRIVATE_ENCOUNTER_STAGE_HHA;
 
+
 create or replace table PRIVATE_ENCOUNTER_STAGE_BCARRIER (
      BENE_ID varchar(20)
     ,CLM_ID varchar(20)
     ,PLCSRVC varchar(3)
     ,THRU_DT date
     ,PRF_NPI varchar(12)
+    ,PRGRPNPI varchar(12) -- usually empty
+    ,RFR_NPI varchar(12) -- from header file (unique match)
+    ,PROVZIP varchar(12)
+    ,PRVSTATE varchar(3)
+    ,HCFASPCL varchar(3)
+    ,TYPSRVCB varchar(2)
+    -- ,CPO_ORG_NPI_NUM varchar(12)  -- from header file (unique match), not exists prior to 2014
     ,LPRPAYCD varchar(2) 
     ,MT_ENC_TYPE varchar(5)
     ,MT_FACILITY_TYPE varchar(50)
@@ -113,6 +140,10 @@ create or replace table PRIVATE_ENCOUNTER_STAGE_DME (
     ,PLCSRVC varchar(3)
     ,THRU_DT date
     ,SUP_NPI varchar(12)
+    ,RFR_NPI varchar(12) -- from header file (unique match)  
+    ,PRVSTATE varchar(3)
+    ,HCFASPCL varchar(3)
+    ,TYPSRVCB varchar(2)
     ,LPRPAYCD varchar(2) 
     ,MT_ENC_TYPE varchar(5)
     ,MT_FACILITY_TYPE varchar(50)

@@ -121,3 +121,45 @@ create or replace table PRIVATE_ENROLLMENT_STAGE_D (
     SRC_TABLE varchar(20),
     SRC_DATE date NOT NULL
 );
+
+/*staging table for medicaid dual eligibility*/
+create or replace table PRIVATE_ENROLLMENT_STAGE_DUAL (
+    BENE_ID varchar(50) NOT NULL,
+    RFRNC_YR varchar(5) NOT NULL,
+    DUAL_01 varchar(5) NULL,
+    DUAL_02 varchar(5) NULL,
+    DUAL_03 varchar(5) NULL,
+    DUAL_04 varchar(5) NULL,
+    DUAL_05 varchar(5) NULL,
+    DUAL_06 varchar(5) NULL,
+    DUAL_07 varchar(5) NULL,
+    DUAL_08 varchar(5) NULL,
+    DUAL_09 varchar(5) NULL,
+    DUAL_10 varchar(5) NULL,
+    DUAL_11 varchar(5) NULL,
+    DUAL_12 varchar(5) NULL,
+    SRC_SCHEMA varchar(20),
+    SRC_TABLE varchar(20),
+    SRC_DATE date NOT NULL
+);
+
+/*staging table for low-income-subsidity eligibility*/
+create or replace table PRIVATE_ENROLLMENT_STAGE_LIS (
+    BENE_ID varchar(50) NOT NULL,
+    RFRNC_YR varchar(5) NOT NULL,
+    CSTSHR01 varchar(5) NULL,
+    CSTSHR02 varchar(5) NULL,
+    CSTSHR03 varchar(5) NULL,
+    CSTSHR04 varchar(5) NULL,
+    CSTSHR05 varchar(5) NULL,
+    CSTSHR06 varchar(5) NULL,
+    CSTSHR07 varchar(5) NULL,
+    CSTSHR08 varchar(5) NULL,
+    CSTSHR09 varchar(5) NULL,
+    CSTSHR10 varchar(5) NULL,
+    CSTSHR11 varchar(5) NULL,
+    CSTSHR12 varchar(5) NULL,
+    SRC_SCHEMA varchar(20),
+    SRC_TABLE varchar(20),
+    SRC_DATE date NOT NULL
+);

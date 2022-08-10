@@ -252,3 +252,28 @@ class SqlGenerator_FTS(SqlGenerator):
             stg_tname = self.stg_tname
         )
         return(sql)
+
+class SqlGenerator_HeaderURL(SqlGenerator):
+    """
+    Generate DDL based on header file
+    """
+    
+    def __init__(self,schema_name:str,table_name:str,header:list):
+        self.schema_name = schema_name
+        self.table_name = table_name
+        self.header = header
+        
+    def GenerateDDL(self):
+        sql = '''CREATE OR REPLACE TABLE %(schema_name)s.%(table_name)s (%(cols)s);''' % dict (
+            schema_name = self.schema_name,
+            table_name = self.table_name,
+            cols = ',\n'.join('"%s" %s' % (item,self._sql_type_map["CHAR"][0] % dict(width='6000')) 
+                                           for item in self.header)
+        )
+        return (sql)
+    
+    def GenerateDML(self):
+        print('not supported!')
+        
+    def GenerateDDML(self):
+        print('not supported!')

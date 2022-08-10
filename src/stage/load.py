@@ -23,11 +23,12 @@ from datetime import date,timedelta
 
 @dataclass
 class AWSSecrets:
+    region_name: str
     secret_name: Optional[str] = None
 
     def GetSecretVal(self):
         """read connection strings= values from secret manager"""
-        secrete_client = boto3.client(service_name='secretsmanager',region_name="us-east-2") #! region name is hard-coded
+        secrete_client = boto3.client(service_name='secretsmanager',region_name=self.region_name) #! region name is hard-coded
         return ast.literal_eval(secrete_client.get_secret_value(SecretId=self.secret_name)['SecretString'])[self.secret_name]
 
 class SnowflakeConnection(object): 
@@ -38,6 +39,10 @@ class SnowflakeConnection(object):
     sfusr: AWSSecrets
     sfpwd: AWSSecrets
     sfacct: AWSSecrets
+
+    # sfusr: str
+    # sfpwd: str
+    # sfacct: str
     
     def __init__(self,sfuser,sfpwd,sfacct):
         self.sfuser = sfuser
@@ -51,10 +56,13 @@ class SnowflakeConnection(object):
             user = self.sfuser.GetSecretVal(),
             password = self.sfpwd.GetSecretVal(),
             account = self.sfacct.GetSecretVal()
+            # user = self.sfuser,
+            # password = self.sfpwd,
+            # account = self.sfacct
         )
         return self.connector  # need to return connection object for "write_pandas" to work
 
-    def __exit__(self,traceback):
+    def __exit__(self,type,value,traceback):
         if traceback is None:
             self.connector.commit()
         else:
@@ -97,6 +105,7 @@ def SfExec_StitchParts(conn,tbl:str,parts:list,drop_after_merge=False):
 
 # https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
 def SfExec_ScriptsFromFile(conn, path_to_file):
+    """load script directly from file"""
     # Open and read the file as a single buffer
     fd = open(path_to_file, 'r')
     sqlFile = fd.read()
@@ -111,6 +120,26 @@ def SfExec_ScriptsFromFile(conn, path_to_file):
             conn.execute(command)
         except Exception as e:
             print("Command skipped: ", e)
+
+def SfExec_WriteCSV(conn,path_to_csv,file_name,table_name:str):
+    """directly put csv file to target table"""
+    # create file format for csv
+    conn.execute(f'CREATE OR REPLACE FILE FORMAT {table_name}_FORMAT \n'
+                 f'  TYPE = CSV COMPRESSION = NONE FIELD_DELIMITER = \',\' RECORD_DELIMITER = \'\n\' \n'
+                 f'  SKIP_HEADER = 0 FIELD_OPTIONALLY_ENCLOSED_BY = \'"\' TRIM_SPACE = FALSE  \n'
+                 f'  ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE ESCAPE = NONE \n')
+    
+    # create external stage
+    conn.execute(f'CREATE OR REPLACE STAGE {table_name}_STAGE \n' 
+                 f'  FILE_FORMAT = {table_name}_FORMAT')
+    
+    # put csv into stage
+    conn.execute(f'PUT file://{path_to_csv}/{file_name} @{table_name}_STAGE AUTO_COMPRESS = TRUE')
+
+    # copy file from stage to target table
+    conn.execute(f'COPY INTO {table_name} FROM @{table_name}_STAGE/{file_name} \n'
+                 f'  FILE_FORMAT = {table_name}_FORMAT \n'
+                 f'  ON_ERROR = "ABORT_STATEMENT"')
 
 def Download_SAS7bDAT(bucket_name,path_to_sas,src_sas,verbose=True)->None:
     # download data to local storage
@@ -135,45 +164,51 @@ def Read_SAS7bDAT(src_sas,row_offset=0,row_limit=-1,num_processes=1,verbose=True
         if row_limit == -1:
             #load all rows
             #pyreadstat.read_file_multiprocessing doesn't seem to work... 
-            sasdf, sasmeta = pyreadstat.read_file_multiprocessing(pyreadstat.read_sas7bdat,f'{src_sas}.sas7bdat', 
+            sasdf, sasmeta = pyreadstat.read_file_multiprocessing(pyreadstat.read_sas7bdat,f'{src_sas}.sas7bdat',
                                                                   num_processes=num_processes,
-                                                                  disable_datetime_conversion=True,encoding=encoding)
+                                                                  disable_datetime_conversion=True,
+                                                                  encoding=encoding)
         else:
             #load by chunks
-            sasdf, sasmeta = pyreadstat.read_file_multiprocessing(pyreadstat.read_sas7bdat,f'{src_sas}.sas7bdat', 
-                                                                  num_processes=num_processes,row_offset=row_offset,row_limit=row_limit,
-                                                                  disable_datetime_conversion=True,encoding=encoding)
+            sasdf, sasmeta = pyreadstat.read_file_multiprocessing(pyreadstat.read_sas7bdat,f'{src_sas}.sas7bdat',
+                                                                  num_processes=num_processes,
+                                                                  row_offset=row_offset,row_limit=row_limit,
+                                                                  disable_datetime_conversion=True,
+                                                                  encoding=encoding)
     else: 
         # no parallelization
         # https://ofajardo.github.io/pyreadstat_documentation/_build/html/index.html
         if row_limit == -1:
             #load all rows
             sasdf, sasmeta = pyreadstat.read_sas7bdat(f'{src_sas}.sas7bdat',
-                                                      disable_datetime_conversion=True,encoding=encoding)
+                                                      disable_datetime_conversion=True,
+                                                      encoding=encoding)
         else:
             #load by chunks
             sasdf, sasmeta = pyreadstat.read_sas7bdat(f'{src_sas}.sas7bdat',
                                                       row_offset=row_offset, row_limit=row_limit,
-                                                      disable_datetime_conversion=True,encoding=encoding)
+                                                      disable_datetime_conversion=True,
+                                                      encoding=encoding)
     
     if verbose: 
         print(f'file of size {sasdf.shape} read in memory!')
     
-                                                               
+    # only read-in metadata
     if sasdf.shape[0] == 0: #table can be empty
         print(f'Table {src_sas.upper()} has row counts: {sasdf.shape[0]}!') 
         return [False,[],sasmeta.original_variable_types]
     else: 
         # snowflake has a panda.tools library with seemingly a convenience function to directly write pandas dataframe to snowflake
         # however, there may be issues with date type compatibility
-        def fix_date_cols(df, meta, tz = 'UTC'): 
+        def fix_datetime_cols(df, meta, tz = 'UTC'): 
+            # fix integer date
             cols = [col for col in df if col.lower().endswith('_date')]
             for col in cols:
                 # some date columns may auto-convert to datetime64 formate
-                if 'DATETIME' in meta.original_variable_types[col].upper():
+                if 'DATETIME64' in meta.original_variable_types[col].upper():
                     df[col] = [x.date() for x in df[col].dt.tz_localize(tz)]
                 # some date columns may be converted to a 5-digit numbers representing numbers of days since 01/01/1960, SAS origin date
-                elif any(x in meta.original_variable_types[col].upper() for x in ['MMDDYY','DATE']):
+                elif any(x in meta.original_variable_types[col].upper() for x in ['MMDDYY','YYMMDDN','DATE']):
                     df[col] = [date(1960,1,1) + timedelta(days=x) for x in df[col].fillna(999999)] #999999 convert missing dates to a future date 4697-11-26
                 # any other format remains the same until conversion error pops out when writing to snowflake
                 else:
@@ -181,9 +216,20 @@ def Read_SAS7bDAT(src_sas,row_offset=0,row_limit=-1,num_processes=1,verbose=True
                 # https://github.com/wesm/feather/issues/349
                 # https://stackoverflow.com/questions/32888124/pandas-out-of-bounds-nanosecond-timestamp-after-offset-rollforward-plus-adding-a
                 df[col] = pd.to_datetime(df[col],errors = 'coerce').dt.date #errored out any future dates (including the articial one)
+            
+            ## fix integer time
+            cols = [col for col in df if col.lower().endswith('_time')]
+            for col in cols:
+                # some time column doesn't preserve the original HH:MM format
+                if any(x in meta.original_variable_types[col].upper() for x in ['HHMM','TIME']):
+                    df[col] = [f'{str(timedelta(seconds=x))}' for x in df[col].fillna(0)] #fill na by 0 seconds
+                # any other format remains the same until conversion error pops out when writing to snowflake
+                else:
+                    df[col] = df[col]
             return(df)
+            
         # fix all the date columns before writing to snowflake
-        sasdf = fix_date_cols(sasdf, sasmeta)
+        sasdf = fix_datetime_cols(sasdf, sasmeta)
         
         # convert column names into upper cases
         colnm_lower = sasdf.columns
@@ -195,14 +241,14 @@ def Read_SAS7bDAT(src_sas,row_offset=0,row_limit=-1,num_processes=1,verbose=True
         else: 
             return [True,sasdf,sasmeta.original_variable_types]
     
-def SfWrite_PandaDF(conn,params,sasdf,verbose=True):
+def SfWrite_PandaDF(conn,params:dict,sasdf,verbose=True):
         # write pandas dataframe to snowflake
         try:
-            write_pandas(conn,sasdf,params.tgt_table,
-                         database=params.env_db,schema=params.tgt_schema)
+            # "write_pandas" only takes "conn" object, instead of conn.cursor()
+            write_pandas(conn,sasdf,params["tgt_table"],
+                         database=params["env_db"],schema=params["env_schema"])
         except Exception as e:
             print(e)
             
         if verbose:
-            print(f'{params.tgt_table}{sasdf.shape} written in snowflake')
-
+            print(f'{params["tgt_table"]}{sasdf.shape} written in snowflake')

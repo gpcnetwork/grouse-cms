@@ -321,7 +321,8 @@ def bucket_size(bucket_name):
     
 if __name__ == '__main__':
 
-    config_data = json.load(open(file="../config.json",encoding = "utf-8"))
+    dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    config_data = json.load(open(file=f'{dir_path}/config.json',encoding = "utf-8"))
     
     def promt_user():
         read_bucket = config_data["aws"]["s3_bucket_source"]
@@ -361,7 +362,7 @@ if __name__ == '__main__':
         os.chdir("./data")
            
         # s3 buckets which contain executable objects
-        filter_keys = config_data["cms_file_key"]
+        filter_keys = config_data["cms_keys"]["cms_file_keys"]
         #keys_ elements allow to access the content
         keys_ = []
         filenames = get_objects(READ_BUCKET,filter_keys,client)
