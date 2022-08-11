@@ -35,7 +35,7 @@ table_name = "NPIDATA"
  
 snowflake_conn = load.SnowflakeConnection(user,pwd,acct) 
 with snowflake_conn as conn:
-    params = config_data["snowflake_csv_stg"]
+    params = config_data["snowflake_c2p_stg"]
     # set up the snowflake environment
     load.SfExec_EnvSetup(conn.cursor(),params)
     # assume the file structure doesn't change over time, then there are three NPPES tables can be consumed

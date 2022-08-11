@@ -18,20 +18,21 @@ $$
 
 // collect columns from target cdm encounter table
 var get_tbl_cols = snowflake.createStatement({
-    sqlText: `SELECT table_name, listagg(column_name,',') AS enc_col
+    sqlText: `SELECT table_schema, table_name, listagg(column_name,',') AS enc_col
                 FROM information_schema.columns 
                 WHERE table_catalog = current_database() 
                   AND table_schema = 'CMS_PCORNET_CDM_STAGING'
                   AND table_name LIKE 'PRIVATE_ENCOUNTER_STAGE%'
                   AND column_name NOT IN ('SRC_SCHEMA','SRC_TABLE','DEDUP_INDEX')
-                GROUP BY table_name;`});
+                GROUP BY table_schema,table_name;`});
 var tables = get_tbl_cols.execute();
 
 // for each staging table
 while (tables.next())
 {
-    var table = tables.getColumnValue(1);
-    var cols_var = tables.getColumnValue(2).split(",");
+    var schema = tables.getColumnValue(1);  
+    var table = tables.getColumnValue(2);
+    var cols_var = tables.getColumnValue(3).split(",");
     var cols_raw = cols_var.filter(value =>{return !value.includes('MT_')});
     let stg_pt_qry = '';
 
@@ -57,10 +58,10 @@ while (tables.next())
                               ,coalesce(p2p.PAYER_TYPE_PRIMARY,'NI') AS mt_payer_type_primary
                               ,coalesce(p2p.PAYER_TYPE_SECONDARY,'NI') AS mt_payer_type_secondary
                         FROM ` + SRC_SCHEMA + `.MEDPAR_ALL mpa
-                        LEFT JOIN CONCEPT_MAPPINGS.PRVDNUM2FACTYPE p2f on TRY_TO_NUMERIC(RIGHT(mpa.PRVDRNUM,4)) between p2f.PRVDRNUM_LB and p2f.PRVDRNUM_UB
-                        LEFT JOIN CONCEPT_MAPPINGS.STUS2STUS st2st on mpa.DSTNTNCD = st2st.STUSCD
-                        LEFT JOIN CONCEPT_MAPPINGS.SRCADMS2SRCADMS sr2sr on mpa.SRC_ADMS = sr2sr.SRCADMS
-                        LEFT JOIN CONCEPT_MAPPINGS.PRPAY2PAYER p2p on mpa.PRPAY_CD = p2p.PRPAYCD
+                        LEFT JOIN `+schema+`.PRVDNUM2FACTYPE p2f on TRY_TO_NUMERIC(RIGHT(mpa.PRVDRNUM,4)) between p2f.PRVDRNUM_LB and p2f.PRVDRNUM_UB
+                        LEFT JOIN `+schema+`.STUS2STUS st2st on mpa.DSTNTNCD = st2st.STUSCD
+                        LEFT JOIN `+schema+`.SRCADMS2SRCADMS sr2sr on mpa.SRC_ADMS = sr2sr.SRCADMS
+                        LEFT JOIN `+schema+`.PRPAY2PAYER p2p on mpa.PRPAY_CD = p2p.PRPAYCD
                        )
                        SELECT DISTINCT `+ cols_var +`, '` + SRC_SCHEMA + `','MEDPAR_ALL',
                               ROW_NUMBER() OVER (PARTITION BY bene_id, mt_enc_type, admsndt ORDER BY prpay_cd, mt_discharge_date desc) dedup_index
@@ -111,10 +112,10 @@ while (tables.next())
                        LEFT JOIN ed_rev_cntr ed ON op.BENE_ID = ed.BENE_ID AND op.CLM_ID = ed.CLM_ID AND ed.rn = 1
                        LEFT JOIN os_rev_cntr os ON op.BENE_ID = os.BENE_ID AND op.CLM_ID = os.CLM_ID AND os.rn = 1
                        LEFT JOIN th_rev_cntr th ON op.BENE_ID = th.BENE_ID AND op.CLM_ID = th.CLM_ID AND th.rn = 1
-                       LEFT JOIN CONCEPT_MAPPINGS.TOB2FACTYPE t2f ON (op.FAC_TYPE||op.TYPESRVC) = t2f.TOB 
-                       LEFT JOIN CONCEPT_MAPPINGS.PRVDNUM2FACTYPE p2f ON TRY_TO_NUMERIC(op.PROVIDER) BETWEEN p2f.PRVDRNUM_LB AND p2f.PRVDRNUM_UB
-                       LEFT JOIN CONCEPT_MAPPINGS.STUS2STUS st2st ON op.STUS_CD = st2st.STUSCD
-                       LEFT JOIN CONCEPT_MAPPINGS.PRPAY2PAYER p2p ON op.PRPAY_CD = p2p.PRPAYCD
+                       LEFT JOIN `+schema+`.TOB2FACTYPE t2f ON (op.FAC_TYPE||op.TYPESRVC) = t2f.TOB 
+                       LEFT JOIN `+schema+`.PRVDNUM2FACTYPE p2f ON TRY_TO_NUMERIC(op.PROVIDER) BETWEEN p2f.PRVDRNUM_LB AND p2f.PRVDRNUM_UB
+                       LEFT JOIN `+schema+`.STUS2STUS st2st ON op.STUS_CD = st2st.STUSCD
+                       LEFT JOIN `+schema+`.PRPAY2PAYER p2p ON op.PRPAY_CD = p2p.PRPAYCD
                        )
                        SELECT DISTINCT `+ cols_var +`,'` + SRC_SCHEMA + `','OUTPATIENT_BASE_CLAIMS',
                               ROW_NUMBER() OVER (PARTITION BY bene_id, mt_enc_type, from_dt ORDER BY prpay_cd, mt_discharge_date desc) dedup_index
@@ -134,10 +135,10 @@ while (tables.next())
                               ,COALESCE(p2p.PAYER_TYPE_PRIMARY,'NI') AS mt_payer_type_primary
                               ,COALESCE(p2p.PAYER_TYPE_SECONDARY,'NI') AS mt_payer_type_secondary
                         FROM ` + SRC_SCHEMA + `.`+ tbl_prefix +`_BASE_CLAIMS inst
-                        LEFT JOIN CONCEPT_MAPPINGS.TOB2FACTYPE t2f ON (inst.FAC_TYPE||inst.TYPESRVC) = t2f.TOB 
-                        LEFT JOIN CONCEPT_MAPPINGS.PRVDNUM2FACTYPE p2f ON TRY_TO_NUMERIC(inst.PROVIDER) BETWEEN p2f.PRVDRNUM_LB AND p2f.PRVDRNUM_UB
-                        LEFT JOIN CONCEPT_MAPPINGS.STUS2STUS st2st ON inst.STUS_CD = st2st.STUSCD
-                        LEFT JOIN CONCEPT_MAPPINGS.PRPAY2PAYER p2p ON inst.PRPAY_CD = p2p.PRPAYCD
+                        LEFT JOIN `+schema+`.TOB2FACTYPE t2f ON (inst.FAC_TYPE||inst.TYPESRVC) = t2f.TOB 
+                        LEFT JOIN `+schema+`.PRVDNUM2FACTYPE p2f ON TRY_TO_NUMERIC(inst.PROVIDER) BETWEEN p2f.PRVDRNUM_LB AND p2f.PRVDRNUM_UB
+                        LEFT JOIN `+schema+`.STUS2STUS st2st ON inst.STUS_CD = st2st.STUSCD
+                        LEFT JOIN `+schema+`.PRPAY2PAYER p2p ON inst.PRPAY_CD = p2p.PRPAYCD
                        )
                        SELECT DISTINCT `+ cols_var +`,'` + SRC_SCHEMA + `','`+ tbl_prefix +`_BASE_CLAIMS',
                               ROW_NUMBER() OVER (PARTITION BY bene_id, mt_enc_type, from_dt ORDER BY prpay_cd, thru_dt DESC) dedup_index
@@ -156,9 +157,9 @@ while (tables.next())
                               ,COALESCE(p2p.PAYER_TYPE_SECONDARY,'NI') AS mt_payer_type_secondary
                         FROM ` + SRC_SCHEMA + `.`+ tbl_prefix +`_LINE line
                         JOIN ` + SRC_SCHEMA + `.`+ tbl_prefix +`_CLAIMS clm on line.BENE_ID = clm.BENE_ID AND line.CLM_ID = clm.CLM_ID
-                        LEFT JOIN CONCEPT_MAPPINGS.POS2ENCTYPE p2e on line.PLCSRVC = p2e.POS
-                        LEFT JOIN CONCEPT_MAPPINGS.POS2FACTYPE p2f on line.PLCSRVC = p2f.POS
-                        LEFT JOIN CONCEPT_MAPPINGS.PRPAY2PAYER p2p on line.LPRPAYCD = p2p.PRPAYCD
+                        LEFT JOIN `+schema+`.POS2ENCTYPE p2e on line.PLCSRVC = p2e.POS
+                        LEFT JOIN `+schema+`.POS2FACTYPE p2f on line.PLCSRVC = p2f.POS
+                        LEFT JOIN `+schema+`.PRPAY2PAYER p2p on line.LPRPAYCD = p2p.PRPAYCD
                        )
                        SELECT DISTINCT `+ cols_var +`,'` + SRC_SCHEMA + `','`+ tbl_prefix +`_LINE',
                               ROW_NUMBER() OVER (PARTITION BY bene_id, mt_enc_type, from_dt ORDER BY lprpaycd, thru_dt DESC) dedup_index

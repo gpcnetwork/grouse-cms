@@ -13,7 +13,7 @@
 import json
 import os
 import pandas as pd
-from .. staging import load
+from .. stage import load
 from snowflake.connector.pandas_tools import write_pandas
 
 # load configuration file
@@ -66,3 +66,4 @@ with snowflake_conn as conn:
     stage_and_transform("diagnosis")
     stage_and_transform("procedures")
     stage_and_transform("dispensing")
+    stage_and_transform("provider")
