@@ -4,7 +4,12 @@ The Greater Plains Collaborative Clinical Data Research Networks (GPC CDRNs), is
 In order to understand all types of care a patient receives without being restricted to specific health systems, the GPC Reusable Observable Unified Study Environment (GROUSE) – a de-identified data resource, is created by merging CMS claims (covering the entire 11 states) with GPC site EMR data. GPC CDRN selected three types of conditions - one rare disease (amyotrophic lateral sclerosis), one common disease (breast cancer), and obesity, to a) quantify completeness of the health system-derived data repositories; and b) evaluate the distributions of health and care processes for the patients within the GPC versus the larger Medicare and Medicaid populations in our region to understand how studies of the GPC population generalize to the broader populations in our states. To acknowlege the usage of GROUSE data, please include the following citation in your publication: 
 
 ```
-Lemuel R Waitman, Xing Song, Dammika Lakmal Walpitage, Daniel C Connolly, Lav P Patel, Mei Liu, Mary C Schroeder, Jeffrey J VanWormer, Abu Saleh Mosa, Ernest T Anye, Ann M Davis, Enhancing PCORnet Clinical Research Network data completeness by integrating multistate insurance claims with electronic health records in a cloud environment aligned with CMS security and privacy requirements, Journal of the American Medical Informatics Association, 2021;, ocab269, https://doi.org/10.1093/jamia/ocab269*
+Lemuel R Waitman, Xing Song, Dammika Lakmal Walpitage, Daniel C Connolly, Lav P Patel, Mei Liu, 
+Mary C Schroeder, Jeffrey J VanWormer, Abu Saleh Mosa, Ernest T Anye, Ann M Davis, 
+Enhancing PCORnet Clinical Research Network data completeness by integrating multistate 
+insurance claims with electronic health records in a cloud environment aligned with CMS security 
+and privacy requirements, Journal of the American Medical Informatics Association, 2021;
+ocab269, https://doi.org/10.1093/jamia/ocab269*
 ```
 
 # Medicare Research Identifiable Files (RIF)
@@ -13,7 +18,7 @@ Currently, the GPC coordinating center (GPC CC) recieves Medicare RIF files via 
 # Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
 The extract, load and transform (ELT) process can be summarised in the diagram below
 
-![res/workflow.jpg]
+![res/workflow.png]
 
 ### Extract and Load 
 - A: [load source] The source SDAs files were first uploaded to a designated, encrypted S3 bucket via secured upload (TLS/SSL) 
@@ -24,17 +29,16 @@ The extract, load and transform (ELT) process can be summarised in the diagram b
 - F: [extract and load] Run `./src/stage/stage_cms_care.py` in the configured developer environment  
 
 ### Transformation to PCORnet CDM
-To improve interoperatability, we have implemented a process of transforming source Medicare RIF schema into PCORnet Common Data Model schema. Current transformation process is specific to Snowflake database. However, it can be easily adopted to PostGresql or MangoDB database backend (which supports stored procedure in javascript) but will require some adaptation to equivalent function objects in other types of databases. The following data lineage diagram demystifies how transformation is implemented associating the `.sql` scripts with source, intermediate, and target tables. The following list of entity relation diagrams (ERD) provides full data lineage details from source CMS RIF files to target CDM table (i.e., c2p transform).   
+To improve interoperatability, we have implemented a process of transforming source Medicare RIF schema into PCORnet Common Data Model schema. Current transformation process is specific to Snowflake database. However, it can be easily adopted to PostGresql or MangoDB database backend (which supports stored procedure in javascript) but will require some adaptation to equivalent function objects in other types of databases. The following data lineage diagram demystifies how transformation is implemented associating the `.sql` scripts with source, intermediate, and target tables. The following list of entity relation diagrams (ERD) provides full data lineage details from source CMS RIF files to target CDM table (i.e., c2p transform).
 
-- [c2p transform - enrollment](res/c2p_transform_enrollment.jpg)
-- [c2p transform - demographic](res/c2p_transform_demographic.jpg)
-- [c2p transform - death](res/c2p_transform_death.jpg)
-- [c2p transform - lds_address_history](res/c2p_transform_lds_address_history.jpg)
-- [c2p transform - encounter](res/c2p_transform_encounter.jpg)
-- [c2p transform - diagnosis](res/c2p_transform_diagnosis.jpg)
-- [c2p transform - procedures](res/c2p_transform_procedures.jpg)
-- [c2p transform - dispensing](res/c2p_transform_dispensing.jpg)
-
+- [ERD - c2p transform - enrollment](res/c2p_transform_enrollment.jpg)
+- [ERD - c2p transform - demographic](res/c2p_transform_demographic.jpg)
+- [ERD - c2p transform - death](res/c2p_transform_death.jpg)
+- [ERD - c2p transform - lds_address_history](res/c2p_transform_lds_address_history.jpg)
+- [ERD - c2p transform - encounter](res/c2p_transform_encounter.jpg)
+- [ERD - c2p transform - diagnosis](res/c2p_transform_diagnosis.jpg)
+- [ERD - c2p transform - procedures](res/c2p_transform_procedures.jpg)
+- [ERD - c2p transform - dispensing](res/c2p_transform_dispensing.jpg)
 
 - G. Run parts of the `c2p/transform_step.py` on the configured developer environment. You may want to start with running the transformation step by step to identify and fix any bugs should there be any. The script consist of three parts: 
 1) create table shells by running the DDL (data definition lanugaue) scripts in `./src/ddl`; 
