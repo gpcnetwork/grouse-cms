@@ -40,7 +40,7 @@ To improve interoperatability, we have implemented a process of transforming sou
 - [ERD - c2p transform - procedures](res/c2p_transform_procedures.jpg)
 - [ERD - c2p transform - dispensing](res/c2p_transform_dispensing.jpg)
 
-- G. Run parts of the `c2p/transform_step.py` on the configured developer environment. You may want to start with running the transformation step by step to identify and fix any bugs should there be any. The script consist of three parts: 
+G: Run parts of the `c2p/transform_step.py` on the configured developer environment. You may want to start with running the transformation step by step to identify and fix any bugs should there be any. The script consist of three parts: 
 1) create table shells by running the DDL (data definition lanugaue) scripts in `./src/ddl`; 
 2) load reference concept mapping tables pre-loaded in `./ref/` folder; 
 3) run stored procedures in `./src/stored_procedures` for staging and transformation; 
