@@ -18,7 +18,7 @@ Currently, the GPC coordinating center (GPC CC) recieves Medicare RIF files via 
 # Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
 The extract, load and transform (ELT) process can be summarised in the diagram below
 
-![res/workflow.png]
+![workflow](res/workflow.png)
 
 ### Extract and Load 
 - A: [load source] The source SDAs files were first uploaded to a designated, encrypted S3 bucket via secured upload (TLS/SSL) 
