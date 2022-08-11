@@ -31,14 +31,14 @@ The extract, load and transform (ELT) process can be summarised in the diagram b
 ### Transformation to PCORnet CDM
 To improve interoperatability, we have implemented a process of transforming source Medicare RIF schema into PCORnet Common Data Model schema. Current transformation process is specific to Snowflake database. However, it can be easily adopted to PostGresql or MangoDB database backend (which supports stored procedure in javascript) but will require some adaptation to equivalent function objects in other types of databases. The following data lineage diagram demystifies how transformation is implemented associating the `.sql` scripts with source, intermediate, and target tables. The following list of entity relation diagrams (ERD) provides full data lineage details from source CMS RIF files to target CDM table (i.e., c2p transform).
 
-- [ERD - c2p transform - enrollment](res/c2p_transform_enrollment.jpg)
-- [ERD - c2p transform - demographic](res/c2p_transform_demographic.jpg)
-- [ERD - c2p transform - death](res/c2p_transform_death.jpg)
-- [ERD - c2p transform - lds_address_history](res/c2p_transform_lds_address_history.jpg)
-- [ERD - c2p transform - encounter](res/c2p_transform_encounter.jpg)
-- [ERD - c2p transform - diagnosis](res/c2p_transform_diagnosis.jpg)
-- [ERD - c2p transform - procedures](res/c2p_transform_procedures.jpg)
-- [ERD - c2p transform - dispensing](res/c2p_transform_dispensing.jpg)
+- [ERD - c2p transform - enrollment](res/c2p_transform_enrollment.png)
+- [ERD - c2p transform - demographic](res/c2p_transform_demographic.png)
+- [ERD - c2p transform - death](res/c2p_transform_death.png)
+- [ERD - c2p transform - lds_address_history](res/c2p_transform_lds_address_history.png)
+- [ERD - c2p transform - encounter](res/c2p_transform_encounter.png)
+- [ERD - c2p transform - diagnosis](res/c2p_transform_diagnosis.png)
+- [ERD - c2p transform - procedures](res/c2p_transform_procedures.png)
+- [ERD - c2p transform - dispensing](res/c2p_transform_dispensing.png)
 
 G: Run parts of the `c2p/transform_step.py` on the configured developer environment. You may want to start with running the transformation step by step to identify and fix any bugs should there be any. The script consist of three parts: 
 1) create table shells by running the DDL (data definition lanugaue) scripts in `./src/ddl`; 
