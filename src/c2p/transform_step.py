@@ -15,7 +15,7 @@
 import json
 import os
 import pandas as pd
-from .. stage import load, stage_nppes
+from .. staging import load
 from snowflake.connector.pandas_tools import write_pandas
 
 # load configuration file

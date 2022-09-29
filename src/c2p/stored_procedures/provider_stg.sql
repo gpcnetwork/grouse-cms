@@ -15,21 +15,20 @@ $$
 /**stage encounter table from different CMS table
  * @param {string} SRC_SCHEMA: source schema for staging
 **/
+let path_to_nppes = 'NPPES_NPI_REGISTRY.NIPPES_FEB.NPIDATA'
+
 // collect columns from target staging table
 var get_stg_cols = snowflake.createStatement({
-    sqlText: `SELECT table_schema,LISTAGG(DISTINCT column_name,',') AS enc_col
+    sqlText: `SELECT LISTAGG(DISTINCT column_name,',') AS enc_col
                 FROM information_schema.columns 
                 WHERE table_catalog = current_database() 
                   AND table_schema = 'CMS_PCORNET_CDM_STAGING'
                   AND table_name = 'PRIVATE_PROVIDER_STAGE'
-                  AND column_name NOT IN ('NPI','SRC_SCHEMA','SRC_TABLE')
-                GROUP BY table_schema;`});
+                  AND column_name NOT IN ('NPI','SRC_SCHEMA','SRC_TABLE');`});
 var stg_cols = get_stg_cols.execute(); stg_cols.next();
-var tbl_schema = stg_cols.getColumnValue(1);
-var stg_cols_lst = stg_cols.getColumnValue(2).split(",");
+var stg_cols_lst = stg_cols.getColumnValue(1).split(",");
 var stg_cols_alias = stg_cols_lst.map(value => {return 'nppes.'+ value});
-var stg_cols_alias2 = stg_cols_lst.map(value => {return 's.' + value});
-var path_to_nppes = tbl_schema +`.NPIDATA`
+var stg_cols_alias2 = stg_cols_lst.map(value => {return 's.' + value})
 
 // collect NPI columns from source tables
 var get_npi_cols = snowflake.createStatement({

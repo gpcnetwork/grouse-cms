@@ -1,4 +1,3 @@
-
 ##################################################################### 
 # Copyright (c) 2021-2022 University of Missouri  
 # Author: Askar Afshar, as9bn@missouri.edu                         
@@ -24,10 +23,9 @@ import logging
 import sys
 import time
 
-
-
 def bucket_list():
-    '''# Returns a list of all buckets owned by the authenticated sender of the request.
+    '''
+    Returns a list of all buckets owned by the authenticated sender of the request.
     '''
     s3_client = boto3.client('s3')
     buckets = s3_client.list_buckets()
@@ -37,10 +35,12 @@ def bucket_list():
     return bucket_names
     
 def get_objects(bucket_name):
-    """
+    '''
     bucket_name: string
-    returns a dictionary: key: folder name, value: list of object names
-    """
+    returns a dictionary: 
+    - key: folder name
+    - value: list of object names
+    '''
     # Returns some or all (up to 1,000) of the objects in a bucket.
     s3_client = boto3.client('s3') # Using the default session
     response = s3_client.list_objects(Bucket=bucket_name)
@@ -58,9 +58,9 @@ def get_objects(bucket_name):
     
 def files_to_unzip():
     '''
-    #return: dictionary 
-           # keys: name of buckets, which contain a single zip file
-           # values: list of two elemens; 1) prefix 2) key
+    return: dictionary 
+    - keys: name of buckets, which contain a single zip file
+    - values: list of two elemens; 1) prefix 2) key
     '''
     zipped_path_keys = {} # key: bucket, value: [prefix,key]
     s3 = boto3.resource('s3')
@@ -99,9 +99,7 @@ def getListOfFiles(dirName):
 
 try:
     zipped_path_keys = files_to_unzip() #{'nextgenbmi-cms-test': ['', 'CDM_20220203_1.zip']}
-
-    current_dir = os. getcwd() 
-
+    current_dir = os.getcwd() 
     directory = 'extracted_files'
     path = os.path.join(current_dir, directory)
 

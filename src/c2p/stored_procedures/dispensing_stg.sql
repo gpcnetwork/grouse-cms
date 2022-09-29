@@ -42,6 +42,7 @@ var stg_pt_qry = `  INSERT INTO private_dispensing_stage
                     SELECT pde.pde_id
                           ,pde.bene_id
                           ,pde.prscrbid
+                          ,pde.prvdr_id
                           ,pde.srvc_dt
                           ,pde.prdsrvid
                           ,pde.dayssply

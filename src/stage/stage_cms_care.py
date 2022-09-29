@@ -28,19 +28,26 @@ within snowflake connection context, perform data staging process
 ref: https://docs.snowflake.com/en/user-guide/data-load-external-tutorial.html
 """
 
+stage_spec = ['R11986'] # [] empty list suggests to stage files from all requests
+
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 config_data = json.load(open(file=f'{dir_path}/config.json',encoding = "utf-8"))
 
 #get snowflake connections strings
-user = load.AWSSecrets(secret_name = config_data["aws"]["user_secret"])
-pwd = load.AWSSecrets(secret_name = config_data["aws"]["pwd_secret"])
-acct = load.AWSSecrets(secret_name = config_data["aws"]["acct_secret"])
-params = config_data["snowflake_cms_stg"]
+region = config_data["aws_grouse_default"]["region"]
+user = load.AWSSecrets(region,secret_name = config_data["aws_grouse_default"]["user_secret"])
+pwd = load.AWSSecrets(region,secret_name = config_data["aws_grouse_default"]["pwd_secret"])
+acct = load.AWSSecrets(region,secret_name = config_data["aws_grouse_default"]["acct_secret"])
+params = config_data["snowflake_cms_admin_default"]
     
 #get other aws parameters
-s3_bucket = config_data["aws"]["s3_bucket_target"]
-s3_key = config_data["aws"]["s3_bucket_key"]
-filenames = utils.get_objects(s3_bucket,s3_key)
+s3_bucket = config_data["cms_keys"]["s3_bucket_target"]
+s3_key = config_data["cms_keys"]["s3_bucket_key"]
+filenames = utils.get_objects(s3_bucket)
+filenames ={k: filenames[k] for k in filenames.keys() & {f"{s3_key}dat_files",f"{s3_key}fts_files"}}
+cms_file_req = ['req'+k.replace('R','0').rjust(6,'0') for k in config_data["cms_keys"]["cms_file_keys"]]
+if len(stage_spec) > 0 and len(stage_spec) < len(cms_file_req): 
+    cms_file_req = [r for r in cms_file_req if r in stage_spec]
 
 #mapping to fts file index
 map_fts = [i for  y in filenames[f"{s3_key}dat_files"] for i, x in enumerate(filenames[f"{s3_key}fts_files"]) if match(x.split('.')[0],y.split('.')[0])]
@@ -49,8 +56,11 @@ map_fts = [i for  y in filenames[f"{s3_key}dat_files"] for i, x in enumerate(fil
 snowflake_conn = load.SnowflakeConnection(user,pwd,acct) 
 with snowflake_conn as conn:
     # set up the snowflake environment
+    params["env_schema"] = config_data["cms_keys"]["sf_stg_schema"]
+    params["stg_table"] = config_data["cms_keys"]["sf_stg_table"]
+    params["stg_stage"] = config_data["cms_keys"]["sf_stg_stage"]
     load.SfExec_EnvSetup(conn.cursor(),params)
-    conn.execute('ALTER SESSION SET DATE_INPUT_FORMAT = \'YYYYMMDD\'') #this is unique to CMS data
+    conn.cursor().execute('ALTER SESSION SET DATE_INPUT_FORMAT = \'YYYYMMDD\'') #this is unique to CMS data
     load.SfExec_CreateFixedWidthTable(conn.cursor(),params)
     
     # initialize benchmark params
@@ -59,19 +69,21 @@ with snowflake_conn as conn:
     
     # breakpoint - modify k if loop gets interrupted
     k = 0
-    for idx, val in enumerate(filenames[s3_key][k:]):
+    for idx, val in enumerate(filenames[f"{s3_key}dat_files"][k:]):
         #---simple benchmark---start
         start = time.time() 
+
+        if not any(req in val for req in cms_file_req):
+            continue
         
         # parse out metadata info and generate ddl and dml scripts
         fts_filename = filenames[f"{s3_key}fts_files"][map_fts[(idx+k)]]
         filefts = s3open(f's3://{s3_bucket}/{s3_key}fts_files/{fts_filename}','r')
         file_name = val.split('.')[0]
         fts_parse_out = extract.FTSParser(filefts).parse_body()
-        
         # automatically generate SQL scripts
         sql_generator = extract.SqlGenerator_FTS(file_name,fts_parse_out,params["stg_table"])
-
+        
         # copy data file to STAGE_TABLE 
         load.SfExec_CopyIntoDat(conn.cursor(),params,file_name)
         

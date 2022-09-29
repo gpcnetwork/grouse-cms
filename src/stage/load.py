@@ -74,6 +74,7 @@ def SfExec_EnvSetup(conn,params:dict):
     conn.execute(f'USE ROLE {params["env_role"]}')
     conn.execute(f'USE WAREHOUSE {params["env_wh"]}')
     conn.execute(f'USE DATABASE {params["env_db"]}')
+    conn.execute(f'CREATE SCHEMA IF NOT EXISTS {params["env_schema"]}')
     conn.execute(f'USE SCHEMA {params["env_schema"]}')
         
 def SfExec_CreateFixedWidthTable(conn,params:dict):       
@@ -121,34 +122,14 @@ def SfExec_ScriptsFromFile(conn, path_to_file):
         except Exception as e:
             print("Command skipped: ", e)
 
-def SfExec_WriteCSV(conn,path_to_csv,file_name,table_name:str):
-    """directly put csv file to target table"""
-    # create file format for csv
-    conn.execute(f'CREATE OR REPLACE FILE FORMAT {table_name}_FORMAT \n'
-                 f'  TYPE = CSV COMPRESSION = NONE FIELD_DELIMITER = \',\' RECORD_DELIMITER = \'\n\' \n'
-                 f'  SKIP_HEADER = 0 FIELD_OPTIONALLY_ENCLOSED_BY = \'"\' TRIM_SPACE = FALSE  \n'
-                 f'  ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE ESCAPE = NONE \n')
-    
-    # create external stage
-    conn.execute(f'CREATE OR REPLACE STAGE {table_name}_STAGE \n' 
-                 f'  FILE_FORMAT = {table_name}_FORMAT')
-    
-    # put csv into stage
-    conn.execute(f'PUT file://{path_to_csv}/{file_name} @{table_name}_STAGE AUTO_COMPRESS = TRUE')
-
-    # copy file from stage to target table
-    conn.execute(f'COPY INTO {table_name} FROM @{table_name}_STAGE/{file_name} \n'
-                 f'  FILE_FORMAT = {table_name}_FORMAT \n'
-                 f'  ON_ERROR = "ABORT_STATEMENT"')
-
-def Download_SAS7bDAT(bucket_name,path_to_sas,src_sas,verbose=True)->None:
+def Download_S3Objects(bucket_name,path_to_src_obj,download_file,verbose=True)->None:
     # download data to local storage
     s3_client = boto3.resource('s3')
     s3_bucket = s3_client.Bucket(bucket_name)
-    s3_bucket.download_file(Key = f'{src_sas}',
-                            Filename = f'{path_to_sas}')
+    s3_bucket.download_file(Key = path_to_src_obj,
+                            Filename = download_file)
     if verbose: 
-        print(f'file {src_sas} downloaded!')
+        print(f'file {path_to_src_obj} downloaded!')
 
 def Read_SAS7bDAT(src_sas,row_offset=0,row_limit=-1,num_processes=1,verbose=True,encoding='utf-8')->list:
     # load into current session as pandas dataframe

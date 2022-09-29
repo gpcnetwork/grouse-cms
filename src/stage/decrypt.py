@@ -325,8 +325,8 @@ if __name__ == '__main__':
     config_data = json.load(open(file=f'{dir_path}/config.json',encoding = "utf-8"))
     
     def promt_user():
-        read_bucket = config_data["aws"]["s3_bucket_source"]
-        write_bucket = config_data["aws"]["s3_bucket_target"]
+        read_bucket = config_data["cms_keys"]["s3_bucket_source"]
+        write_bucket = config_data["cms_keys"]["s3_bucket_target"]
         print("\n The Bucket You Are Reading From Is : ", read_bucket)
         print("\n The Bucket You Are Writing To Is : ", write_bucket)
         return [read_bucket,write_bucket]
@@ -344,7 +344,9 @@ if __name__ == '__main__':
         plt.savefig('run_time.png')
         
     def main():
-        session = BotoSession(region=config_data["aws"]["region"]).refreshable_session()
+        dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        config_data = json.load(open(file=f'{dir_path}/config.json',encoding = "utf-8"))    
+        session = BotoSession(region_name=config_data["aws_grouse_default"]["region"]).refreshable_session()
         client = session.client("s3") 
         #credentials = session.get_credentials()
         #ACCESS_KEY = credentials.access_key  
@@ -357,12 +359,13 @@ if __name__ == '__main__':
         # create a data directory
         t = time.time()
         #print(t)
-        os.mkdir("./data")
+        if not os.path.isdir('data'):
+            os.mkdir("./data")
         # step into data directory
         os.chdir("./data")
            
         # s3 buckets which contain executable objects
-        filter_keys = config_data["cms_keys"]["cms_file_keys"]
+        filter_keys = config_data["cms_keys"]["cms_file_keys"][0] #LIFO
         #keys_ elements allow to access the content
         keys_ = []
         filenames = get_objects(READ_BUCKET,filter_keys,client)
@@ -374,7 +377,7 @@ if __name__ == '__main__':
         #keys_: 'R5900/res000050354req005900_2011_HSPC_SPAN'
 
         # get passwords
-        pass_dict = get_secret_password(READ_BUCKET,filter_keys,session,client,config_data["aws"]["region"])
+        pass_dict = get_secret_password(READ_BUCKET,filter_keys,session,client,config_data["aws_grouse_default"]["region"])
 
         content_size = {} # collects size of aws objects/files
         for key in keys_:
@@ -402,7 +405,7 @@ if __name__ == '__main__':
             k = file.split('/')[0]
             k = "cms-"+k+"-key"
             password = pass_dict[k]
-           
+
             child = pexpect.spawn(cmd)
             child.sendline(password)
 

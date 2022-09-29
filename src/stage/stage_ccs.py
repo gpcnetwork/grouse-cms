@@ -40,8 +40,8 @@ if not skip_download:
         resp = urlopen(config_data["ccs_keys"]["ccs_cpt_url"])
     else: 
         print("ccs mapping type not exist!")
-    # unzip
     zipped_file = ZipFile(BytesIO(resp.read()))
+    # unzip
     zipped_file.extractall(f'{dir_path}/staging/tmp_dir') # tmp_dir will be created under root folder
     file_lst = zipped_file.namelist()
     print(f'files downloaded:{file_lst} ')

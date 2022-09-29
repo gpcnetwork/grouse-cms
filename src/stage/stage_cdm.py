@@ -34,49 +34,50 @@ dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 config_data = json.load(open(file=f'{dir_path}/config.json',encoding = "utf-8"))
 
 #extract snowflake secrets from secret manager
-user = load.AWSSecrets(region_name=config_data["aws"]["region"], secret_name = config_data["aws"]["user_secret"])
-pwd = load.AWSSecrets(region_name=config_data["aws"]["region"], secret_name = config_data["aws"]["pwd_secret"])
-acct = load.AWSSecrets(region_name=config_data["aws"]["region"], secret_name = config_data["aws"]["acct_secret"])
-params = config_data["snowflake_cdm_stg"]
+region = config_data["aws_grouse_default"]["region"]
+user = load.AWSSecrets(region,secret_name = config_data["aws_grouse_default"]["user_secret"])
+pwd = load.AWSSecrets(region,secret_name = config_data["aws_grouse_default"]["pwd_secret"])
+acct = load.AWSSecrets(region,secret_name = config_data["aws_grouse_default"]["acct_secret"])
+params = config_data["snowflake_cms_admin_default"]
 
 #get other aws parameters
 gpc_list = [  
             #  'allina'
-            # ,'mcw'
             #  'ihc'
-             'kumc'
-            #  'mcri'
-            # ,'uiowa'
-            # 'unmc'
-            # ,'uthouston'
-            #  'uthscsa'
-            #  'utsw'
-            # ,'uu'
-            #  'washu'
+            #  'kumc'
+            #  'mcri' #xwalk
+            #  ,'mcw' #xwalk
+            #  ,'uiowa'
+            #  ,'unmc'
+            #  ,'uthouston'
+            #  ,'uthscsa' #xwalk
+            #  ,'utsw'
+            #  ,'uu'
+            #  ,'washu' #xwalk
             ]
     
 tbl_incld = [ 
             #   'harvest'
-            #   'condition'
+            #  ,'condition'
             #  ,'death_cause'
             #  ,'death'
             #  ,'demographic'
             #  ,'diagnosis'
-            #   'dispensing'
-              'encounter'
+            #  ,'dispensing'
+            #  ,'encounter'
             #  ,'enrollment'
             #  ,'immunization'
             #  ,'lab_history'
             #   'lab_result_cm'
-            #   'med_admin'
-            #  ,'obs_clin'
+            #  ,'med_admin'
+            #   'obs_clin'
             #  ,'obs_gen'
             #  ,'pcornet_trial'
-            #   'prescribing'
+            #  ,'prescribing'
             #  ,'pro_cm'
             #  ,'procedures'
             #  ,'provider'
-            #   'vital'
+            #  ,'vital'
             ]
             
 #download pcornet cdm metadata
@@ -95,7 +96,7 @@ with snowflake_conn as conn:
     # initialize benchmark params
     benchmk_data = []
     file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"benchmark","benchmark_staging.csv")
-    '''
+    
     # part I - write sas7bdat file from s3 bucket to snowflake
     # breakpoint - modify k if loop gets interrupted
     k = 0
@@ -144,14 +145,14 @@ with snowflake_conn as conn:
                 
                 # download file in full - once per file
                 if not skip_download:
-                    load.Download_SAS7bDAT(src_bucket,
+                    load.Download_S3Objects(src_bucket,
                                            f'{src_file_name}.{src_file_type}',
-                                           f'extract/{src_file_name}.{src_file_type}')
+                                           f'{src_file_name}.{src_file_type}')
                 
                 # write .sas7bdat to table
                 if load_by_chunk:
                     # write by chuncks
-                    chunk_idx = 1 # modifiable if break
+                    chunk_idx = 20 # modifiable if break
                     skip_row = (chunk_idx-1)*chunk_size
                     next_row = True
                     
@@ -226,7 +227,7 @@ with snowflake_conn as conn:
         except Exception as e:
             print(f'Error:{e}')
     # part I ends
-    '''
+    
     # part II - stitch parts together if files are loaded in chunks
     k = 0
     for site in gpc_list[k:]:

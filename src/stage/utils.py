@@ -11,24 +11,25 @@ import time
 import zipfile
 import urllib
 
-def get_objects(bucket_name,subfolder)->dict:
+def get_objects(bucket_name,subfolder=None,s3_client=None)->dict:
     """
     bucket_name: string
     returns a dictionary: key: folder name, value: list of object names
     """
-    # Returns some or all (up to 1,000) of the objects in a bucket.
-    s3_client = boto3.client('s3') # Using the default session
+    if s3_client is None:
+        s3_client = boto3.client('s3') # Using the default session
     response = s3_client.list_objects(Bucket=bucket_name)
     # Iterate over the content of the bucket and retreive folders and contents
     request_files = response["Contents"]
     filenames = {}
     for file in request_files:
         path, filename = os.path.split(file['Key'])
-        if filename != '' and filename.endswith('.txt') != True and filename.endswith('.csv') != True:
+        if filename != '':
             if path not in filenames:
                 filenames[path] = [filename]
             else:
                 filenames[path].append(filename)
+    # flattened
     if subfolder:
         filenames_cp = filenames
         filenames = {}
