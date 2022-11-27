@@ -18,7 +18,7 @@ Currently, the GPC coordinating center (GPC CC) recieves Medicare RIF files via 
 # Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
 The extract, load and transform (ELT) process can be summarised in the diagram below
 
-![workflow](res/workflow.png)
+![workflow](res/elt-workflow.png)
 
 ### Extract and Load 
 - A: [load source] The source SDAs files were first uploaded to a designated, encrypted S3 bucket via secured upload (TLS/SSL) 
@@ -49,6 +49,15 @@ G: Run parts of the `c2p/transform_step.py` on the configured developer environm
 
 For fully automated transformation, you can run `c2p/transform_full.py` on the configured developer environment without commenting out any steps, which runs all the steps mentioned above without requiring any human intervention. However, we would recommend running the stepwise transformation at least once to validate the underlying sql scripts.     
 
+# Linkage and Deidentification
+![linkage-deid](res/linkage-deid-workflow.png)
+
+- A: [load source] The source SDAs files were first uploaded to a designated, encrypted S3 bucket via secured upload (TLS/SSL) 
+- B: [configurattion and preparation] The same as steps B to D from the ELT process above
+- C: [decrypt and decompress] Run `./src/stage/decrypt.py` in the configured developer environment  
+- D: [extract and load] Run `./src/stage/stage_cms_care.py`, `./src/stage/stage_xwalk.py`, and `./src/stage/stage_cdm.py` to stage all needed source files onto snowflake
+- E-F: [match and align] Run stored procedures `./src/link_deid/cdm_link_deid_stg.sql` to create intermediate tables specifying all de-identification parameters
+- G-I: [deidentify and secure share] Run stored procedures `./src/link_deid/cdm_link_deid.sql` to create LDS and De-identified secure views of all the CDM data. 
 
 ---------------------------------------------------------------------------------------------------
 References: 

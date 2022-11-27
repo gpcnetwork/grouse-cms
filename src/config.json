@@ -1,33 +1,33 @@
 {
     "snowflake_cms_admin_default":{
-        "env_role":"...",
-        "env_db":"...",
-        "env_wh":"...",
-        "env_schema":"...",
+        "env_role":"",
+        "env_db":"",
+        "env_wh":"",
+        "env_schema":"",
         "tgt_table":""
     },
     "aws_grouse_default":{
-        "region": "...",
-        "user_secret": "...",
-        "pwd_secret": "...",
-        "acct_secret": "..."
+        "region": "",
+        "user_secret": "",
+        "pwd_secret": "",
+        "acct_secret": ""
     },
     "cms_keys":{
-        "s3_bucket_source": "...",
-        "s3_bucket_target": "...",
-        "s3_bucket_key": "...",
+        "s3_bucket_source": "",
+        "s3_bucket_target": "",
+        "s3_bucket_key": "CMS/",
         "cms_file_keys": [
-            "",
-            ""
+            "RXXX",
+            "RXXXX"
         ],
-        "sf_stg_schema":"...",
-        "sf_stg_stage":"...",
-        "sf_stg_table":"...",
-        "sf_env_schema":"...",
-        "sf_env_wh":"..."
+        "sf_stg_schema":"",
+        "sf_stg_stage":"",
+        "sf_stg_table":"",
+        "sf_env_schema":"CMS_PCORNET_CDM_BACKUP",
+        "sf_env_wh":""
     },
     "cms_finder_file_keys":{
-        "s3_bucket_source": "...",
+        "s3_bucket_source": "",
         "sf_env_schema":"PATID_MAPPING"
     },
     "nppes_keys":{
@@ -38,46 +38,48 @@
         "ccs_icd9_multiple_url":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs/Multi_Level_CCS_2015.zip",
         "cci_icd9_url":"https://www.hcup-us.ahrq.gov/toolssoftware/chronic/cci2015.csv",
         "surg_flag_icd9_url":"https://www.hcup-us.ahrq.gov/toolssoftware/surgflags/surgery_flags_icd9_2017.zip",
-        "ccs_icd10cm_urls":["https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/DXCCSR_v2022-1.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/DXCCSR_v2021-2.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/v2020-3.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/DXCCSR2019_1.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_dx_icd10cm_2019_1.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_dx_icd10cm_2018_1.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_dx_icd10cm_2017.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_dx_icd10cm_FY%202016_December2016.zip"],
-        "ccs_icd10pcs_urls":["https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/PRCCSR_v2022-1.zip",
-                             "https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/PRCCSR_v2021-1.zip",
-                             "https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2020_1.zip",
-                             "https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2019_2.zip",
-                             "https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2018_2.zip",
-                             "https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2017_3.zip",
-                             "https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2016_3.zip"],
-        "cci_icd10cm_url":["https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/CCI-ICD10CM-v2021-1.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/cci_icd10cm_2019_1.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/cci_icd10cm_2018_1.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/cci_icd10cm_2017.zip",
-                           "https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/cci_icd10cm_FY%202016_October.zip"],
-        "elixhauser_icd10cm_url":["https://www.hcup-us.ahrq.gov/toolssoftware/comorbidityicd10/CMR_v2022-1.zip",
-                                  "https://www.hcup-us.ahrq.gov/toolssoftware/comorbidityicd10/ElixhauserComorbidity_v2021-1.zip"],
-        "px_class_icd10pcs_url":["https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/PClassR_v2022-2.zip",
-                                 "https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/ProcedureClasses_v2021-2.zip",
-                                 "https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_2020_1.zip",
-                                 "https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_2019_1.zip",
-                                 "https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_2018_1.zip",
-                                 "https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_FY2017_October2017.csv",
-                                 "https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_FY2016_October2016.csv"],
+        "util_flag_icd9_url":"https://www.hcup-us.ahrq.gov/toolssoftware/util_flags/SASUtilizationFlagsPGMSept2015.zip",
         "util_flag_icd10pcs_url":"https://www.hcup-us.ahrq.gov/toolssoftware/util_flags/ICD10PCS_UtilizationFlags_FY2018_1.zip",
-        "ccs_cpt_urls":["https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/CCS_ServicesProcedures_v2021-1.zip",
-                        "https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/CCS_ServicesProcedures_v2021.2.zip",
-                        "https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/CCS_ServicesProcedures_v2020.1.zip",
-                        "https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/CCS_ServicesProcedures_v2019.2.zip",
-                        "https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/2019_ccs_services_procedures.zip"],
-        "surg_flag_cpt_urls":["https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/SurgeryFlags_Services_Procedures_v2022.1.zip",
-                              "https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/SurgeryFlags_ServicesProcedures_v2021-1.zip",
-                              "https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/SurgeryFlags_ServicesProcedures_v2020.1.zip",
-                              "https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/SurgeryFlags_ServicesProcedures_v2019.2.zip",
-                              "https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/2019_surgery%20flags_services_procedures.zip"]
+        "ccsr_icd10cm_urls":[{"v2022-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/DXCCSR_v2022-1.zip"},
+                             {"v2021-2":"https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/DXCCSR_v2021-2.zip"},
+                             {"v2020-3":"https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/v2020-3.zip"},
+                             {"v2019-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/DXCCSR2019_1.zip"}],
+        "ccs_icd10cm_urls":[{"v2019-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_dx_icd10cm_2019_1.zip"},
+                            {"v2018-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_dx_icd10cm_2018_1.zip"},
+                            {"v2017-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_dx_icd10cm_2017.zip"},
+                            {"v2016-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_dx_icd10cm_FY%202016_December2016.zip"}],
+        "ccs_icd10pcs_urls":[{"v2022-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/PRCCSR_v2022-1.zip"},
+                             {"v2021-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccsr/PRCCSR_v2021-1.zip"},
+                             {"v2020-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2020_1.zip"},
+                             {"v2019-2":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2019_2.zip"},
+                             {"v2018-2":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2018_2.zip"},
+                             {"v2017-3":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2017_3.zip"},
+                             {"v2017-3":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs10/ccs_pr_icd10pcs_2016_3.zip"}],
+        "cci_icd10cm_url":[{"v2021-1":"https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/CCI-ICD10CM-v2021-1.zip"},
+                           {"v2019-1":"https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/cci_icd10cm_2019_1.zip"},
+                           {"v2018-1":"https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/cci_icd10cm_2018_1.zip"},
+                           {"v2017-1":"https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/cci_icd10cm_2017.zip"},
+                           {"v2016-1":"https://www.hcup-us.ahrq.gov/toolssoftware/chronic_icd10/cci_icd10cm_FY%202016_October.zip"}],
+        "elixhauser_icd10cm_url":[{"v2022-1":"https://www.hcup-us.ahrq.gov/toolssoftware/comorbidityicd10/CMR_v2022-1.zip"},
+                                  {"v2021-1":"https://www.hcup-us.ahrq.gov/toolssoftware/comorbidityicd10/ElixhauserComorbidity_v2021-1.zip"}],
+        "px_class_icd10pcs_url":[{"v2022-2":"https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/PClassR_v2022-2.zip"},
+                                 {"v2021-2":"https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/ProcedureClasses_v2021-2.zip"},
+                                 {"v2020-1":"https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_2020_1.zip"},
+                                 {"v2019-1":"https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_2019_1.zip"},
+                                 {"v2018-1":"https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_2018_1.zip"},
+                                 {"v2017-1":"https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_FY2017_October2017.csv"},
+                                 {"v2016-1":"https://www.hcup-us.ahrq.gov/toolssoftware/procedureicd10/pc_icd10pcs_FY2016_October2016.csv"}],
+        "ccs_cpt_urls":[{"v2022-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/CCS_ServicesProcedures_v2022.1.zip"},
+                        {"v2021-2":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/CCS_ServicesProcedures_v2021.2.zip"},
+                        {"v2021-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/CCS_ServicesProcedures_v2021-1.zip"},
+                        {"v2020-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/CCS_ServicesProcedures_v2020.1.zip"},
+                        {"v2019-2":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/CCS_ServicesProcedures_v2019.2.zip"},
+                        {"v2019-1":"https://www.hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/2019_ccs_services_procedures.zip"}],
+        "surg_flag_cpt_urls":[{"v2022-1":"https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/SurgeryFlags_Services_Procedures_v2022.1.zip"},
+                              {"v2021-1":"https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/SurgeryFlags_ServicesProcedures_v2021-1.zip"},
+                              {"v2020-1":"https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/SurgeryFlags_ServicesProcedures_v2020.1.zip"},
+                              {"v2019-2":"https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/SurgeryFlags_ServicesProcedures_v2019.2.zip"},
+                              {"v2019-1":"https://www.hcup-us.ahrq.gov/toolssoftware/surgeryflags_svcproc/2019_surgery%20flags_services_procedures.zip"}]
     },
     "phecode_keys":{
         "phecode_def_1dot2":"https://phewascatalog.org/files/phecode_definitions1.2.csv.zip",
@@ -90,12 +92,19 @@
         "phecodex_icd_cm_url":"https://phewascatalog.org/files/phecodeX/phecodeX_ICD_map.csv.zip"
     },
     "sdoh_keys":{
-        "s3_bucket_source":"...",
-        "sf_env_schema":"...",
-        "adi_stg_table":"...",
+        "s3_bucket_source":"nextgenbmi-upload-sdoh",
+        "sf_env_schema":"PUBLIC_DATA_STAGING",
         "ruca_url":"https://www.ers.usda.gov/webdocs/DataFiles/53241/ruca2010revised.xlsx?v=1405.9",
-        "ruca_stg_table":"...",
-        "acs_url":"https://raw.githubusercontent.com/UNMC-CRANE/SDH/main/SDH_Stats.csv",
-        "acs_stg_table":"..."
+        "acs_vs_url":"https://raw.githubusercontent.com/UNMC-CRANE/SDH/main/SDH_Stats.csv",
+        "acs_col_url":"https://raw.githubusercontent.com/gpcnetwork/UNMC-SDH/main/SDH_Columns.csv"
+    },
+    "env_air_keys":{
+        
+    },
+    "env_soil_keys":{
+        
+    },
+    "env_water_keys":{
+        
     }
 }

@@ -1,5 +1,5 @@
 #####################################################################     
-# Copyright (c) 2021-2022 University of Missouri                   
+# Copyright (c) 2021-2026 University of Missouri                   
 # Author: Xing Song, xsm7f@umsystem.edu                            
 # File: main_cdm.py                                                 
 # The file read Snowflake credential from secret manager and establish
@@ -30,18 +30,18 @@ params = config_data["snowflake_cms_admin_default"]
 
 #get other aws parameters
 gpc_list = [  
-            #  'allina'
+             'allina'  #xwalk
             #  'ihc'
             #  'kumc'
-             'mcri' #xwalk
-             ,'mcw' #xwalk
+            #  'mcri' #xwalk
+            #  ,'mcw' #xwalk
             #  ,'uiowa'
             #  ,'unmc'
             #  ,'uthouston'
-             ,'uthscsa' #xwalk
+            #  ,'uthscsa' #xwalk
             #  ,'utsw'
-            #  ,'uu'
-             ,'washu' #xwalk
+            #   'uu'  #xwalk
+            #  ,'washu' #xwalk
             ]
             
 #create snowflake connection context
@@ -50,7 +50,7 @@ with snowflake_conn as conn:
     # set up the snowflake environment
     load.SfExec_EnvSetup(conn.cursor(),params)
 
-    # part I - write sas7bdat file from s3 bucket to snowflake
+    # part I - write raw xwalk file from s3 bucket to snowflake
     # breakpoint - modify k if loop gets interrupted
     k = 0
     for site in gpc_list[k:]:
@@ -67,10 +67,15 @@ with snowflake_conn as conn:
 
         # identify crosswalk file 
         src_file = [x for x in filenames[''] if 'XWALK' in x.upper()]
+
         if len(src_file) == 0:
             continue # skip if not exists
         load.Download_S3Objects(f'{src_bucket}',f'extract/{src_file[0]}',src_file[0])
-        df = pd.read_csv(src_file[0],header = 0,skiprows = 0)
+        
+        if src_file[0].split('.')[1] == 'txt':
+            df = pd.read_csv(src_file[0], sep = '|', header = 0,skiprows = 0)
+        else:
+            df = pd.read_csv(src_file[0],header = 0,skiprows = 0)
         
         # clean up column names
         colnm = [x.upper() for x in df.columns]

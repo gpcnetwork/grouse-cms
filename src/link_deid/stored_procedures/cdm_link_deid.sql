@@ -65,7 +65,7 @@ var tables = collect_tbl.execute();
 while (tables.next()){   
     // separate date columns and 
     var tbl = tables.getColumnValue(1);
-    var cols = tables.getColumnValue(2).split(",").filter(value =>{return !value.includes('RAW') || value.includes('RAW_BASIS')});
+    var cols = tables.getColumnValue(2).split(",");
     var cols_no_id = cols.filter(value =>{return !value.includes('PATID')});
     var cols_no_id_dob = cols.filter(value =>{return !value.includes('PATID') && !value.includes('BIRTH_DATE')});
     var cols_dt = cols_no_id.filter(value =>{return value.includes('_DATE') && !value.includes('_DATE_IMPUTE') && !value.includes('_DATE_MGMT')});
@@ -94,7 +94,8 @@ while (tables.next()){
         // create secure LDS view (linked)
         var lds_qry = `CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.LDS_`+ tbl +` AS
                         WITH id_map_cte AS (
-                            SELECT xw.`+ id_col +`_hash AS patid, `+ cols_no_id_alias +`
+                            SELECT DISTINCT 
+                                   xw.`+ id_col +`_hash AS patid, `+ cols_no_id_alias +`
                             FROM `+ cdm_schema +`.`+ tbl +` a
                             JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
                             ON a.patid = xw.`+ id_col +`
@@ -108,7 +109,8 @@ while (tables.next()){
         if(tbl.includes('DEMOGRAPHIC')){                       
             var deid_qry =`CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.DEID_`+ tbl +` AS
                             WITH deid_cte AS (
-                                SELECT xw.`+ id_col +`_hash AS patid, xw.`+ dob_hash_col +` AS birth_date,
+                                SELECT DISTINCT 
+                                       xw.`+ id_col +`_hash AS patid, xw.`+ dob_hash_col +` AS birth_date,
                                        `+ cols_no_id_dob_alias +`
                                 FROM `+ cdm_schema +`.`+ tbl +` a
                                 JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
@@ -120,7 +122,8 @@ while (tables.next()){
         }else{
             var deid_qry =`CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.DEID_`+ tbl +` AS
                             WITH deid_cte AS (
-                                SELECT xw.`+ id_col +`_hash AS patid, `+ cols_dt_shift_alias +`
+                                SELECT DISTINCT 
+                                       xw.`+ id_col +`_hash AS patid, `+ cols_dt_shift_alias +`
                                 FROM `+ cdm_schema +`.`+ tbl +` a
                                 JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
                                 ON a.patid = xw.`+ id_col +`

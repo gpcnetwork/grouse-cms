@@ -6,8 +6,10 @@ Manual data downloads are required:
 1. go to https://www.neighborhoodatlas.medicine.wisc.edu/download
 2. register an account and log in for data download
 3. download the ADI rankings for each state (choose 2019 version) and rename file
+- select "9-digit ZIP codes" as linkage format and "Single State"
 - default name of download seems to always be "adi-download" (but may change over time)
-- standardize the file name to "adi-download-2019-<state>.zip" for easy retrivial 
+- standardize the file name to "adi-download-<year of file>-<state>.zip" for easy retrivial 
+- assign the most frequent CBG to zip5+0000 values
 
 @params PATH_TO_ADI_DIR = path to the download folder of ADI zipped files
 '''
@@ -34,7 +36,7 @@ adi_bucket = config_data["sdoh_keys"]["s3_bucket_source"]
 # collect adi zipped file names from source bucket
 try:
     s3obj = utils.get_objects(adi_bucket)
-    adi_zfs = [f for f in s3obj[''] if 'adi-download' in f]
+    adi_zfs = [f for f in s3obj[''] if 'adi-download-2020' in f]
 except Exception as e:
     print(f'Error:{e}')
 
@@ -47,8 +49,8 @@ snowflake_conn = load.SnowflakeConnection(user,pwd,acct)
 with snowflake_conn as conn:
     # set up the snowflake environment
     params = config_data["snowflake_cms_admin_default"]
-    params["env_schema"] = config_data["sdoh_keys"]["sf_env_schema"]
-    params["tgt_table"] = config_data["sdoh_keys"]["adi_stg_table"]
+    params["env_schema"] = "GEOID_MAPPING"
+    params["tgt_table"] = "ZIP9_MAPTO_CBG"
     load.SfExec_EnvSetup(conn.cursor(),params)
         
     # download, unzip, process and integrate
@@ -67,25 +69,31 @@ with snowflake_conn as conn:
             zipped_file.extractall(download_dir)
             file_lst = zipped_file.namelist()
             print(f'files unzipped:{file_lst} ')
-        
+
         # read and clean
-        fn = [f for f in os.listdir(download_dir) if '.txt' in f and not 'ReadMe' in f][0]
+        fn = [f for f in os.listdir(download_dir) if '.csv' in f][0]
         df = pd.read_csv(f'{download_dir}/{fn}',
-                         usecols=['ZIPID','FIPS.x','ADI_NATRANK','ADI_STATERNK'],
-                         dtype={'ZIPID':'str','FIPS.x':'str','ADI_NATRANK':'str','ADI_STATERNK':'str'})
-        df.rename(columns={"FIPS.x": "GEOID_CBG"}, inplace=True)
+                         usecols=['ZIP_4','FIPS','ADI_NATRANK','ADI_STATERANK'],
+                         dtype={'ZIP_4':'str','FIPS':'str','ADI_NATRANK':'str','ADI_STATERANK':'str'}).dropna()
+
+        # maximum likelihood-based assignment of CBG for zip5+0000 values
+        df2 = df[['ZIP_4','FIPS']].assign(ZIP5 = lambda df:df.ZIP_4.str[:5]+'0000')
+        dfzip5 = pd.merge(df2.groupby(['ZIP5'])['FIPS'].agg(lambda x: pd.Series.mode(x)[0]).to_frame().reset_index(),df,how="inner",on="FIPS")
+        dfzip5 = dfzip5.drop(columns="ZIP_4").rename(columns = {'ZIP5':'ZIP_4'}).drop_duplicates()
+        df3 = pd.concat([df,dfzip5])
         
         # start upload to snowflake
-        if idx == 1:
-            sql_generator = extract.SqlGenerator_HeaderURL(params["env_schema"],params["tgt_table"],list(df.columns))
+        if idx == 0:
+            sql_generator = extract.SqlGenerator_HeaderURL(params["env_schema"],params["tgt_table"],list(df3.columns))
             conn.cursor().execute(sql_generator.GenerateDDL())
-        load.SfWrite_PandaDF(conn,params,df)
+            print(f'{params["env_schema"]}.{params["tgt_table"]} was refreshed!')
+        load.SfWrite_PandaDF(conn,params,df3)
 
         # remove temp download folder after writing all csv files to snowflake
         try:
             shutil.rmtree(download_dir)
         except OSError as e:
             print ("Error: %s - %s." % (e.filename, e.strerror))
-    
+
 # garbage clean
 utils.pyclean()

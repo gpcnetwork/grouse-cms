@@ -12,11 +12,84 @@ import pandas as pd
 import pyreadstat
 from datetime import datetime,date,timedelta
 from sas7bdat import SAS7BDAT
+import json
+from urllib.request import urlopen
+from zipfile import ZipFile
+from io import BytesIO
 
+upload_handler={}
+dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+tmp_dir_path = f'{dir_path}/staging/tmp_dir'
+config_data = json.load(open(file=f'{dir_path}/config.json',encoding = "utf-8"))
+
+resp = list()
+ccs_vrsn = list()
+for item in config_data["ccs_keys"]["ccs_cpt_urls"]:
+    ccs_vrsn.extend(list(item.keys()))
+    resp.append(urlopen(item[list(item.keys())[0]]))
+
+csv_name = list()
+ref_name = list()
+for resp_file in resp:
+    zipped_file = ZipFile(BytesIO(resp_file.read()))
+    # unzip
+    zipped_file.extractall(f'{dir_path}/staging/tmp_dir') # tmp_dir will be created under root folder
+    file_lst = zipped_file.namelist()
+    csv_name.extend([i for i in file_lst if ".csv" in i])
+    ref_name.append([i for i in file_lst if "ref-file" in i.lower()])
+    print(f'files downloaded:{file_lst} ')
+
+
+
+
+'''
+upload_handler["cpt_ccs"] = ["CPT_RANGE","CCSLVL","CCSLVL_LABEL","CPT_LB","CPT_UB","VRSN"] #hard-coded
+upload_handler["cpt_ccs_ref"] = ["CCSLVL","CCSLVL_LABEL","VRSN"] #hard-coded
+cpt_ccs = list()
+cpt_ccs_ref = list()
+for idx, vrsn in enumerate(ccs_vrsn):
+    # cpt to ccs mapping
+    cpt_ccs_idx = pd.read_csv(f'{tmp_dir_path}/{csv_name[idx]}',header=None,skiprows = 2, names = upload_handler["cpt_ccs"])
+    cpt_ccs_idx[['CPT_LB', 'CPT_UB']] = cpt_ccs_idx['CPT_RANGE'].str.replace("'","").str.split('-', 1, expand=True)
+    cpt_ccs_idx["VRSN"] = vrsn
+    cpt_ccs.append(cpt_ccs_idx)
+    # ccs reference
+    if ref_name[idx]:
+        cpt_ccs_ref_idx = pd.read_excel(f'{tmp_dir_path}/{ref_name[idx][0]}',sheet_name = 1,header=None,skiprows = 2, names = upload_handler["cpt_ccs_ref"])
+        cpt_ccs_ref_idx["VRSN"] = vrsn
+        cpt_ccs_ref.append(cpt_ccs_ref_idx)
+
+cpt_ccs = pd.concat(cpt_ccs).drop_duplicates()
+cpt_ccs_ref = pd.concat(cpt_ccs_ref).drop_duplicates()
+
+print(cpt_ccs.iloc[0:5,])
+print(cpt_ccs.shape)
+print(cpt_ccs_ref.iloc[0:5,])
+print(cpt_ccs_ref.shape)
+'''
+
+'''
+upload_handler["icd9dx_ccs"] = ["ICD9","CCS_SLVL1","CCS_SLVL1LABEL","ICD9_LABEL","CCS_MLVL1","CCS_MLVL1LABEL","CCS_MLVL2","CCS_MLVL2LABEL","CCS_MLVL3","CCS_MLVL3LABEL","CCS_MLVL4","CCS_MLVL4LABEL"] #hard-coded
+ccsm_names = upload_handler["icd9dx_ccs"][0:1] + upload_handler["icd9dx_ccs"][4:]
+ccss_names = upload_handler["icd9dx_ccs"][0:4]
+
+icd9dx_ccsm = pd.read_csv(f'{tmp_dir_path}/ccs_multi_dx_tool_2015.csv',header=None,skiprows = 1, names = ccsm_names,index_col=False)
+print(icd9dx_ccsm.iloc[1:5,])
+
+icd9dx_ccss = pd.read_csv(f'{tmp_dir_path}/$dxref 2015.csv',header=None,skiprows = 3, names = ccss_names,index_col=False).iloc[:,0:3]
+print(icd9dx_ccss.iloc[0:5,])
+
+icd9dx_ccs = icd9dx_ccss.join(icd9dx_ccsm.set_index("ICD9"),on="ICD9")
+print(icd9dx_ccs.iloc[0:5])
+'''
+
+
+'''
 s3_client = boto3.resource('s3')
 s3_bucket = s3_client.Bucket('gpc-mcri-upload')
 s3_bucket.download_file(Key = 'extract/xwalk2cdm.csv',
                         Filename = 'xwalk2cdm.csv')
+'''
 
 '''
 #load custom package

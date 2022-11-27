@@ -9,11 +9,15 @@
 -- initialize staging table
 create or replace table PRIVATE_LDS_ADDRESS_HISTORY_STAGE ( 
      BENE_ID varchar(50) NOT NULL
-    ,RFRNC_YR varchar(5) NOT NULL
     ,CNTY_CD varchar(5) 
     ,STATE_CD varchar(5)
-    ,ZIP_CD varchar(10)
+    ,ZIP_CD varchar(10) -- contains zip5
+    ,FIPS_CBG varchar(20) -- contains fips_ct, fips_cnty
     ,SRC_SCHEMA varchar(20) NOT NULL
     ,SRC_TABLE varchar(30) NOT NULL
-    ,SRC_DATE date NOT NULL
+    ,SRC_DATE_START date NOT NULL
+    ,SRC_DATE_END date NOT NULL
+    ,SRC_CONFIDENCE double NOT NULL -- highest confidence to MBSF table
+    ,SRC_PRECISION double NOT NULL -- higher precision with zip9 info
 );
+

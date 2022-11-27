@@ -33,35 +33,35 @@ if(SITE.includes('CMS')){
     //
     new_tmp_qry += `CREATE OR REPLACE TABLE bene_mapping.bene_xwalk_tmp AS
                         WITH dob_shift_cte AS (
-                            SELECT a.patid AS bene_id
-                                  ,md5(a.patid) AS bene_id_hash
-                                  ,a.birth_date AS bene_dob
-                                  ,b.`+ NEW_XWALK_HASH_COLNM +` AS hashid
-                                  ,b.site_id AS siteid
+                            SELECT DISTINCT 
+                                   patid AS bene_id
+                                  ,md5(patid) AS bene_id_hash
+                                  ,birth_date AS bene_dob
                                   ,-uniform(1, 365, random(`+ SEED +`)) AS shift
                                   ,`+ SEED +` AS seed
-                          FROM cms_pcornet_cdm.demographic a
-                          LEFT JOIN bene_mapping.`+ NEW_XWALK +` b 
-                          ON a.patid = b.bene_id
-                          WHERE b.unique_match = 1 -- double check field name before runing
+                          FROM cms_pcornet_cdm.demographic
                         )
-                        SELECT bene_id
-                              ,bene_id_hash
-                              ,bene_dob
-                              ,CASE WHEN round(datediff(day,bene_dob,current_date)/365.25)+1 > 89 THEN TO_DATE('1900-01-01')
-                                    ELSE dateadd(day,shift,bene_dob::date)
+                        SELECT a.bene_id
+                              ,a.bene_id_hash
+                              ,a.bene_dob
+                              ,CASE WHEN round(datediff(day,a.bene_dob,current_date)/365.25)+1 > 89 THEN TO_DATE('1900-01-01')
+                                    ELSE dateadd(day,a.shift,a.bene_dob::date)
                                END AS bene_dob_deid
-                              ,hashid
-                              ,CASE WHEN siteid = 'UMO' THEN 'MU'
-                                    WHEN siteid = 'UN' THEN 'UNMC'
-                                    WHEN siteid = 'MCRF' THEN 'MCRI'
-                                    WHEN siteid = 'UK' THEN 'KUMC'
-                                    WHEN siteid = 'AH' THEN 'ALLINA'
-                                    WHEN siteid = 'WU' THEN 'WASHU'
-                                    ELSE siteid END AS siteid
-                              ,shift
-                              ,seed
-                      FROM dob_shift_cte;`;
+                              ,b.`+ NEW_XWALK_HASH_COLNM +` AS hashid
+                              ,CASE WHEN b.site_id = 'UMO' THEN 'MU'
+                                    WHEN b.site_id = 'UN' THEN 'UNMC'
+                                    WHEN b.site_id = 'MCRF' THEN 'MCRI'
+                                    WHEN b.site_id = 'UK' THEN 'KUMC'
+                                    WHEN b.site_id = 'AH' THEN 'ALLINA'
+                                    WHEN b.site_id = 'WU' THEN 'WASHU'
+                                    ELSE b.site_id END AS siteid
+                              ,a.shift
+                              ,a.seed
+                      FROM dob_shift_cte a
+                      LEFT JOIN bene_mapping.`+ NEW_XWALK +` b
+                      ON a.bene_id = b.bene_id
+                      WHERE b.unique_match = 1 and b.sex_match = 1 and b.dob_match = 1 -- double check field name before runing
+                      ;`;
     //                  
     stg_qry += `MERGE INTO bene_mapping.bene_xwalk_cms t
                     USING (SELECT * FROM bene_mapping.bene_xwalk_tmp) s

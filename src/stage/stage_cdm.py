@@ -22,7 +22,7 @@ from re import match, sub
 diagnostic_mode = True
 
 #if skip download
-skip_download = True
+skip_download = False
 
 #load by chunks
 load_by_chunk = True
@@ -48,7 +48,7 @@ gpc_list = [
             #  'mcri' #xwalk
             #  ,'mcw' #xwalk
             #  ,'uiowa'
-            #  ,'unmc'
+              'unmc'
             #  ,'uthouston'
             #  ,'uthscsa' #xwalk
             #  ,'utsw'
@@ -60,7 +60,7 @@ tbl_incld = [
             #   'harvest'
             #  ,'condition'
             #  ,'death_cause'
-            #  ,'death'
+              'death'
             #  ,'demographic'
             #  ,'diagnosis'
             #  ,'dispensing'
@@ -152,7 +152,7 @@ with snowflake_conn as conn:
                 # write .sas7bdat to table
                 if load_by_chunk:
                     # write by chuncks
-                    chunk_idx = 20 # modifiable if break
+                    chunk_idx = 1 # modifiable if break
                     skip_row = (chunk_idx-1)*chunk_size
                     next_row = True
                     
