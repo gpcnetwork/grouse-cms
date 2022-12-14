@@ -16,10 +16,11 @@ linkage process:
 4. create materialized views for all CDMs (cms and site) with aligned patid and add DOB_DEID, SHIFT at the end
 */
 
-
+-- de-id cms cdm data
 call link_deid('CMS');
-call link_deid('MU');
 
+-- de-id site cdm
+call link_deid('MU');
 call link_deid('ALLINA');
 call link_deid('IHC');
 call link_deid('KUMC');

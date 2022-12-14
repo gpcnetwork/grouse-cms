@@ -65,7 +65,7 @@ if(SITE.includes('CMS')){
     //                  
     stg_qry += `MERGE INTO bene_mapping.bene_xwalk_cms t
                     USING (SELECT * FROM bene_mapping.bene_xwalk_tmp) s
-                    ON t.bene_id = s.bene_id
+                    ON t.bene_id = s.bene_id and t.hashid = s.hashid and t.siteid = s.siteid
                     WHEN MATCHED AND t.bene_dob_deid > TO_DATE('1900-01-01') AND s.bene_dob_deid = TO_DATE('1900-01-01')
                         THEN UPDATE SET t.bene_dob_deid = s.bene_dob_deid
                     WHEN NOT MATCHED

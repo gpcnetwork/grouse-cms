@@ -39,6 +39,9 @@ To improve interoperatability, we have implemented a process of transforming sou
 - [ERD - c2p transform - diagnosis](res/c2p_transform_diagnosis.png)
 - [ERD - c2p transform - procedures](res/c2p_transform_procedures.png)
 - [ERD - c2p transform - dispensing](res/c2p_transform_dispensing.png)
+- [ERD - c2p transform - obs_comm](res/c2p_transform_obs_comm.png)
+- [ERD - c2p transform - payer_plan_period](res/c2p_transform_payer_plan_period.png)
+- [ERD - c2p transform - cost](res/c2p_transform_cost.png)
 
 G: Run parts of the `c2p/transform_step.py` on the configured developer environment. You may want to start with running the transformation step by step to identify and fix any bugs should there be any. The script consist of three parts: 
 1) create table shells by running the DDL (data definition lanugaue) scripts in `./src/ddl`; 
