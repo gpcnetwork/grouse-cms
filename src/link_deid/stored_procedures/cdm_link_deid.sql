@@ -1,21 +1,3 @@
-/*
-# Copyright (c) 2021-2025 University of Missouri                   
-# Author: Xing Song, xsm7f@umsystem.edu                            
-# File: cdm_link_deid.sql                                                 
-
-safe harbor rule: 
-1. random date shifting but consistent at individual level
-2. mask birth_date of age > 89 to 1900-01-01
-
-linkage process: 
-1. add DOB to bene_mapping table and create DOB_DEID with birth_date masking
-2. add random shift column SHIFT to bene_mapping and BENE_ID_HASH
-3. create patid_mapping_<site-abbr> for each site with columns: PATID, PAT_DOB, PAT_DOB_DEID, BENE_ID_HASH, BENE_DOB, BENE_DOB_DEID, SHIFT
-   3.1. if there is a match with bene_mapping, populate PATID_HASH as BENE_ID_HASH and inherit shift to patid_mapping, 
-   3.2. otherwise, generate new PATID_HASH and random SHIFT to patid_mapping
-4. create materialized views for all CDMs (cms and site) with aligned patid and add DOB_DEID, SHIFT at the end
-*/
-
 create or replace procedure link_deid(SITE STRING)
 returns variant
 language javascript
@@ -46,7 +28,8 @@ var col_tbl_qry = `SELECT table_name, listagg(column_name,',') AS col_lst
                         ,'IMMUNIZATION'
                         ,'LAB_HISTORY' -- not patient level
                         ,'LAB_RESULT_CM'
-                        ,'LDS_ADDRESS_HISTORY'
+                        ,'PRIVATE_ADDRESS_HISTORY'
+                        --,'PRIVATE_ADDRESS_GEOCODE'
                         ,'MED_ADMIN'
                         ,'OBS_CLIN'
                         ,'OBS_GEN'
@@ -63,18 +46,24 @@ var tables = collect_tbl.execute();
 
 // loop over tables
 while (tables.next()){   
-    // separate date columns and 
+    // get table name, complete column names for different de-id scenario
     var tbl = tables.getColumnValue(1);
-    var cols = tables.getColumnValue(2).split(",");
+    var cols = tables.getColumnValue(2).split(",").filter(value =>{return !value.includes('RAW_') || value.includes('RAW_RX_MED_NAME')});
+    var cols_no_addr = cols.filter(value =>{return !value.includes('STREET') && !value.includes('DETAIL')});
+    var cols_no_addrzip = cols_no_addr.filter(value =>{return !value.includes('ZIP') && !value.includes('ADDRESSID')});
+    
+    // separate out id and dob columns 
     var cols_no_id = cols.filter(value =>{return !value.includes('PATID')});
     var cols_no_id_dob = cols.filter(value =>{return !value.includes('PATID') && !value.includes('BIRTH_DATE')});
+    
+    // separate out date columns and protected columns
     var cols_dt = cols_no_id.filter(value =>{return value.includes('_DATE') && !value.includes('_DATE_IMPUTE') && !value.includes('_DATE_MGMT')});
     var cols_non_dt = cols_no_id.filter(value =>{return !value.includes('_DATE') || value.includes('_DATE_IMPUTE') || value.includes('_DATE_MGMT')});
     
-    // add alias to columns
+    // add alias and shifted function to protected columns
     var cols_no_id_alias = cols_no_id.map(value =>{return 'a.' + value});
     var cols_no_id_dob_alias = cols_no_id_dob.map(value =>{return 'a.' + value});
-    var cols_dt_shift_alias = (cols_dt===undefined || cols_dt.length==0) ? cols_no_id : cols_non_dt.map(value =>{return 'a.' + value}) + ',' + cols_dt.map(function(x){return 'a.'+ x + '::date + xw.shift AS ' + x}); 
+    var cols_dt_shift_alias = (cols_dt===undefined || cols_dt.length==0) ? cols_no_id : cols_non_dt.map(value =>{return 'a.' + value}) + ',' + cols_dt.map(function(x){return 'a.'+ x + '::date + xw.shift AS ' + x});
       
     // construct queries with date shift
     var xw_ref = SITE.includes('CMS') ? 'bene' : 'patid';
@@ -83,56 +72,119 @@ while (tables.next()){
     
     //no patient-level data, copy as is
     if(tbl.includes('HARVEST') || tbl.includes('LAB_HISTORY') || tbl.includes('PROVIDER')){
-        var lds_qry = `CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.LDS_`+ tbl +` AS
+        var lds_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.LDS_`+ tbl +` AS
                        SELECT * FROM `+ cdm_schema +`.`+ tbl +`;`;
-        var deid_qry = `CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.DEID_`+ tbl +` AS
+        var deid_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.DEID_`+ tbl +` AS
                        SELECT * FROM `+ cdm_schema +`.`+ tbl +`;`
     
     //otherwise, need to align patid for both lds and deid view and also shift date for deid view 
     }else{   
         var commit_txn = snowflake.createStatement({sqlText: `commit;`});
-        // create secure LDS view (linked)
-        var lds_qry = `CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.LDS_`+ tbl +` AS
-                        WITH id_map_cte AS (
-                            SELECT DISTINCT 
-                                   xw.`+ id_col +`_hash AS patid, `+ cols_no_id_alias +`
-                            FROM `+ cdm_schema +`.`+ tbl +` a
-                            JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
-                            ON a.patid = xw.`+ id_col +`
-                        )
-                        SELECT `+ cols +` FROM id_map_cte;`;
-        var run_lds_qry = snowflake.createStatement({sqlText: lds_qry});
+        // create secure LDS table (linked)
+        var lds_tbl = tbl.includes('PRIVATE') ? tbl.replace('PRIVATE','LDS'): `LDS_`+ tbl.replace('LDS_','');
+        
+        if(tbl.includes('ADDRESS_HISTORY')){   
+            var lds_t_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ lds_tbl +` AS
+                                WITH id_map_cte AS (
+                                    SELECT DISTINCT 
+                                           xw.`+ id_col +`_hash AS patid, `+ cols_no_id_alias +`
+                                    FROM `+ cdm_schema +`.`+ tbl +` a
+                                    JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
+                                    ON a.patid = xw.`+ id_col +`
+                                )
+                                SELECT `+ cols_no_addr +` FROM id_map_cte;`;
+        }else{
+            var lds_t_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ lds_tbl +` AS
+                                WITH id_map_cte AS (
+                                    SELECT DISTINCT 
+                                           xw.`+ id_col +`_hash AS patid, `+ cols_no_id_alias +`
+                                    FROM `+ cdm_schema +`.`+ tbl +` a
+                                    JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
+                                    ON a.patid = xw.`+ id_col +`
+                                )
+                                SELECT `+ cols +` FROM id_map_cte;`;
+        }
+        
+        var run_lds_qry = snowflake.createStatement({sqlText: lds_t_qry});
         run_lds_qry.execute();
         commit_txn.execute();
                         
         // create secure DEID view
-        if(tbl.includes('DEMOGRAPHIC')){                       
-            var deid_qry =`CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.DEID_`+ tbl +` AS
-                            WITH deid_cte AS (
-                                SELECT DISTINCT 
-                                       xw.`+ id_col +`_hash AS patid, xw.`+ dob_hash_col +` AS birth_date,
-                                       `+ cols_no_id_dob_alias +`
-                                FROM `+ cdm_schema +`.`+ tbl +` a
-                                JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
-                                ON a.patid = xw.`+ id_col +`
-                            )
-                            SELECT `+ cols +` FROM deid_cte;`;
-        }else if(tbl.includes('LDS_ADDRESS_HISTORY')){
-            continue;
+        var deid_tbl = tbl.includes('PRIVATE') ? tbl.replace('PRIVATE','DEID'): `DEID_`+ tbl;
+        
+        if(tbl.includes('DEMOGRAPHIC')){     
+            var deid_t_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ deid_tbl +` AS
+                                WITH deid_cte AS (
+                                    SELECT DISTINCT 
+                                           xw.`+ id_col +`_hash AS patid, xw.`+ dob_hash_col +` AS birth_date,
+                                           `+ cols_no_id_dob_alias +`
+                                    FROM `+ cdm_schema +`.`+ tbl +` a
+                                    JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
+                                    ON a.patid = xw.`+ id_col +`
+                                )
+                                SELECT `+ cols +` FROM deid_cte;`;
+                                
+        }else if(tbl.includes('ADDRESS_HISTORY')){
+            var deid_t_qry =`CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ deid_tbl +` AS
+                                WITH deid_cte AS (
+                                    SELECT DISTINCT 
+                                           xw.`+ id_col +`_hash AS patid, `+ cols_dt_shift_alias +`
+                                    FROM `+ cdm_schema +`.`+ tbl +` a
+                                    JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
+                                    ON a.patid = xw.`+ id_col +`
+                                )
+                                SELECT `+ cols_no_addrzip +` FROM deid_cte;`;
+                                
         }else{
-            var deid_qry =`CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.DEID_`+ tbl +` AS
-                            WITH deid_cte AS (
-                                SELECT DISTINCT 
-                                       xw.`+ id_col +`_hash AS patid, `+ cols_dt_shift_alias +`
-                                FROM `+ cdm_schema +`.`+ tbl +` a
-                                JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
-                                ON a.patid = xw.`+ id_col +`
-                            )
-                            SELECT `+ cols +` FROM deid_cte;`;
+            var deid_t_qry =`CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ deid_tbl +` AS
+                                WITH deid_cte AS (
+                                    SELECT DISTINCT 
+                                           xw.`+ id_col +`_hash AS patid, `+ cols_dt_shift_alias +`
+                                    FROM `+ cdm_schema +`.`+ tbl +` a
+                                    JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw
+                                    ON a.patid = xw.`+ id_col +`
+                                )
+                                SELECT `+ cols +` FROM deid_cte;`;
         }
     }
-    var run_deid_qry = snowflake.createStatement({sqlText: deid_qry});
-    run_deid_qry.execute();
+    var run_deid_t_qry = snowflake.createStatement({sqlText: deid_t_qry});
+    run_deid_t_qry.execute();
+    commit_txn.execute();
+}
+$$
+;
+
+
+create or replace procedure gen_deid_view(SITE STRING)
+returns variant
+language javascript
+as
+$$
+/**
+ * Stored procedure to generate de-id views
+ * @param {string} SITE: the string of site acronyms (matching schema name suffix)
+**/ 
+// check if target deid table exists
+var cdm_schema = SITE.includes('CMS') ? 'CMS_PCORNET_CDM' : 'PCORNET_CDM_' + SITE;
+var chk_tbl = `SELECT DISTINCT table_name
+               FROM information_schema.tables 
+               WHERE table_schema = '`+ cdm_schema +`' 
+                 AND table_name like 'DEID%'`;
+var run_chk_tbl = snowflake.createStatement({sqlText: chk_tbl});
+var get_tbl_result = run_chk_tbl.execute(); 
+
+// loop over tables
+while(get_tbl_result.next()){ 
+    // create view name
+    var deid_tbl = get_tbl_result.getColumnValue(1); 
+    var deid_view = `V_` + deid_tbl;
+    
+    // view genertion query
+    var commit_txn = snowflake.createStatement({sqlText: `commit;`});
+    var deid_v_qry =`CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.`+ deid_view +` AS
+                     SELECT * FROM `+ deid_tbl +`;`;
+    var run_deid_v_qry = snowflake.createStatement({sqlText: deid_v_qry});
+    run_deid_v_qry.execute();
     commit_txn.execute();
 }
 $$

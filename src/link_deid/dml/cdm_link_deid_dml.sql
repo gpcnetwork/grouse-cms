@@ -16,10 +16,10 @@ linkage process:
 4. create materialized views for all CDMs (cms and site) with aligned patid and add DOB_DEID, SHIFT at the end
 */
 
--- de-id cms cdm data
+-- generate lds and de-id tables for cms cdm data
 call link_deid('CMS');
 
--- de-id site cdm
+-- generate lds and de-id tables for site cdm
 call link_deid('MU');
 call link_deid('ALLINA');
 call link_deid('IHC');
@@ -34,5 +34,18 @@ call link_deid('UTSW');
 call link_deid('UU');
 call link_deid('WASHU');
 
-
-
+-- generate secure share views for de-id tables
+call gen_deid_view('CMS');
+call gen_deid_view('MU');
+call gen_deid_view('ALLINA');
+call gen_deid_view('MCW');
+call gen_deid_view('UTHSCSA');
+call gen_deid_view('MCRI');
+call gen_deid_view('UU');
+call gen_deid_view('UTHOUSTON');
+call gen_deid_view('UTSW');
+call gen_deid_view('UNMC');
+call gen_deid_view('WASHU');
+call gen_deid_view('KUMC');
+call gen_deid_view('IHC');
+call gen_deid_view('UIOWA');
