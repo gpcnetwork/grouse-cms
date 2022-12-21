@@ -60,8 +60,7 @@ For fully automated transformation, you can run `c2p/transform_full.py` on the c
 - C: [decrypt and decompress] Run `./src/stage/decrypt.py` in the configured developer environment  
 - D: [extract and load] Run `./src/stage/stage_cms_care.py`, `./src/stage/stage_xwalk.py`, and `./src/stage/stage_cdm.py` to stage all needed source files onto snowflake
 - E-F: [match and align] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid_stg.sql` and `./src/link_deid/dml/cdm_link_deid_stg.sql`to create intermediate tables specifying all de-identification parameters
-- G-I: [deidentify and secure share] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid.sql` to create LDS and De-identified tables of all the CDM data. 
-- 
+- G-I: [deidentify and secure share] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid.sql` and `./src/link_deid/dml/cdm_link_deid.sql` and create LDS and De-identified tables and views of all the CDM data. 
 
 # Database Catalog
 |Database|Schema|Object|Name|
