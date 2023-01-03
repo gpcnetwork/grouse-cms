@@ -73,20 +73,20 @@ For fully automated transformation, you can run `c2p/transform_full.py` on the c
 ## Main CDM Database - `GROUSE_DEID_DB`
 ### Schema - `CMS_PCORNET_CDM` 
 Secure views of PCORnet CDM derived from CMS RIF files
-|Name|Patient #|Encounter #|Observation #|
-|------|------|----|
-|V_DEID_ADDRESS_HISTORY|
-|V_DEID_DEATH|
-|V_DEID_DEMOGRAPHIC|
-|V_DEID_DIAGNOSIS|
-|V_DEID_DISPENSING|
-|V_DEID_ENCOUNTER|
-|V_DEID_ENROLLMENT|
-|V_DEID_PROCEDURES|
+|CDM View|Individual #|Encounter #|Observation #|
+|--------|------------|-----------|-------------|
+|V_DEID_ADDRESS_HISTORY||||
+|V_DEID_DEATH||||
+|V_DEID_DEMOGRAPHIC||||
+|V_DEID_DIAGNOSIS||||
+|V_DEID_DISPENSING||||
+|V_DEID_ENCOUNTER||||
+|V_DEID_ENROLLMENT||||
+|V_DEID_PROCEDURES||||
 
 ### Schema - `PCORNET_CDM_<XX>`
 Secure views of PCORnet CDM derived from GPC sites' EMR data. `<XX>` represents site's name abbreviation (ALLINA, IHC, KUMC, MCRI, MCW, MU, UIOWA, UNMC, UTHOUSTON, UTHSCSA, UTSW, UU, WASHU) 
-|CDM VIEW|ALLINA|IHC|KUMC|MCRI|MCW|MU|UIOWA|UNMC|UTHOUSTON|UTHSCSA|UTSW|UU|WASHU|
+|CDM View|ALLINA|IHC|KUMC|MCRI|MCW|MU|UIOWA|UNMC|UTHOUSTON|UTHSCSA|UTSW|UU|WASHU|
 |--------|------|---|----|----|---|--|-----|----|---------|-------|----|--|-----|
 |V_DEID_CONDITION||||||||||||||
 |V_DEID_DEATH||||||||||||||
