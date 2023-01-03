@@ -12,6 +12,13 @@ and privacy requirements, Journal of the American Medical Informatics Associatio
 ocab269, https://doi.org/10.1093/jamia/ocab269*
 ```
 
+For more details on GROUSE CMS DUA protocol, security policy and procedures, as well as other technical documents, please refer to the following resources: 
+- [GROUSE CMS Executive Summary](doc/CMS_Executive_Summary.pdf)
+- [GROUSE Data Management Plan Approval](doc/CMS_DPSP_DMP_Approval.pdf)
+- [System Security Policy Deck](doc/SSP_Policy_Deck.pdf)
+- [GROUSE private github repository](https://github.com/gpcnetwork/GROUSE): _this private github repo contains more sensitive information about the environment, please reach out to ask-umbmi@umsystem.edu for access_
+
+
 # Medicare Research Identifiable Files (RIF)
 Currently, the GPC coordinating center (GPC CC) recieves Medicare RIF files via windows compatible delivery media (i.e. USB hard drive, DVD, CD) from CMS chronic condition warehouse (CCW), or NewWave-GDIT, by mail. The raw files are in a compressed and encrypted format, called [Self-Decrypting Archives (SDAs)](https://innovation.cms.gov/files/x/bundled-payments-for-care-improvement-learning-area-size-info-doc.pdf). SDAs are stand-along executables that can only be decrypted and decompressed with encryption keys sent from CMS to GPC CC in separate secured email. After decryption and decompression each SDA executable, the actual data file (`.dat`) and the metadata file (`.fts`) and two additional (`.sas`) files were made available for downstream processing. GPC CC has implementated an ETL process leveraging the following key resources: AWS S3 bucket, AWS IAM, AWS Secret Manager, and Snowflake database. 
 
