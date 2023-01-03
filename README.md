@@ -63,6 +63,7 @@ For fully automated transformation, you can run `c2p/transform_full.py` on the c
 - G-I: [deidentify and secure share] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid.sql` and `./src/link_deid/dml/cdm_link_deid.sql` and create LDS and De-identified tables and views of all the CDM data. 
 
 # Database Catalog
+## Main CDM Database - `GROUSE_DEID_DB`
 |Database|Schema|Object|Name|
 |--------|------|------|----|
 |GROUSE_DEID_DB|CMS_PCORNET_CDM|VIEW|V_DEID_ADDRESS_HISTORY|
@@ -303,6 +304,8 @@ For fully automated transformation, you can run `c2p/transform_full.py` on the c
 |GROUSE_DEID_DB|PCORNET_CDM_WASHU|VIEW|V_DEID_PROCEDURES|
 |GROUSE_DEID_DB|PCORNET_CDM_WASHU|VIEW|V_DEID_PRO_CM|
 |GROUSE_DEID_DB|PCORNET_CDM_WASHU|VIEW|V_DEID_VITAL|
+
+## Auxciliary Databases
 |NPPES_NPI_REGISTRY|NPPES_FEB|BASE TABLE|NPIDATA|
 |NPPES_NPI_REGISTRY|NPPES_FEB|BASE TABLE|NPI_ENDPOINTS|
 |NPPES_NPI_REGISTRY|NPPES_FEB|BASE TABLE|NPI_OTHER_NAMES|
