@@ -86,12 +86,12 @@ Secure views of PCORnet CDM derived from **CMS RIF files**
 
 ### Schema - `PCORNET_CDM_<XX>`
 Secure views of PCORnet CDM derived from **GPC sites' electronic medical records**. `<XX>` represents site's abbreviation (ALLINA, IHC, KUMC, MCRI, MCW, MU, UIOWA, UNMC, UTHOUSTON, UTHSCSA, UTSW, UU, WASHU) and the checkbox
-|CDM View|ALLINA|IHC|KUMC|MCRI|MCW|MU|UIOWA|UNMC|UTHOUSTON|UTHSCSA|UTSW|UU|WASHU|
-|--------|------|---|----|----|---|--|-----|----|---------|-------|----|--|-----|
-|V_DEID_CONDITION|&#x2611|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|
-|V_DEID_DEATH|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]||[x]|
+|CDM View*|ALLINA|IHC|KUMC|MCRI|MCW|MU|UIOWA|UNMC|UTHOUSTON|UTHSCSA|UTSW|UU|WASHU|
+|---------|------|---|----|----|---|--|-----|----|---------|-------|----|--|-----|
+|V_DEID_CONDITION|C|C|C|C|C|C|C|C|C|C|C|C|C|
+|V_DEID_DEATH|C|C|C|C|C|C|C|C|C|C|C|C|C|
 |V_DEID_DEATH_CAUSE||||||||||||||
-|V_DEID_DEMOGRAPHIC||||||||||||||
+|V_DEID_DEMOGRAPHIC|C|C|C|C|C|C|C|C|C|C|C|C|C|
 |V_DEID_DIAGNOSIS||||||||||||||
 |V_DEID_DISPENSING||||||||||||||
 |V_DEID_ENCOUNTER||||||||||||||
@@ -106,6 +106,10 @@ Secure views of PCORnet CDM derived from **GPC sites' electronic medical records
 |V_DEID_PROCEDURES||||||||||||||
 |V_DEID_PRO_CM||||||||||||||
 |V_DEID_VITAL||||||||||||||
+
+*C: consistently populated
+*P: partially populated
+*N: not populated/empty
 
 ## Auxciliary Databases
 |Database|Schema|Object|Name|Description|
