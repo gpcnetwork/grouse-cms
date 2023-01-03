@@ -73,15 +73,15 @@ For fully automated transformation, you can run `c2p/transform_full.py` on the c
 ## Main CDM Database - `GROUSE_DEID_DB`
 ### Schema - `CMS_PCORNET_CDM` 
 Secure views of PCORnet CDM derived from **CMS RIF files**
-|CDM View|Individual #|Encounter #|Observation #|
-|--------|------------|-----------|-------------|
-|V_DEID_ADDRESS_HISTORY||||
-|V_DEID_DEATH||||
-|V_DEID_DEMOGRAPHIC||||
+|CDM View|Individual # (%)|Encounter #|Observation #|
+|--------|----------------|-----------|-------------|
+|V_DEID_ADDRESS_HISTORY||NA||
+|V_DEID_DEATH||NA||
+|V_DEID_DEMOGRAPHIC||NA||
 |V_DEID_DIAGNOSIS||||
 |V_DEID_DISPENSING||||
 |V_DEID_ENCOUNTER||||
-|V_DEID_ENROLLMENT||||
+|V_DEID_ENROLLMENT||NA||
 |V_DEID_PROCEDURES||||
 
 ### Schema - `PCORNET_CDM_<XX>`
@@ -107,9 +107,9 @@ Secure views of PCORnet CDM derived from **GPC sites' electronic medical records
 |V_DEID_PRO_CM||||||||||||||
 |V_DEID_VITAL||||||||||||||
 
-*C: consistently populated
-*P: partially populated
-*N: not populated/empty
+* C: consistently populated
+* P: partially populated
+* N: not populated/empty
 
 ## Auxciliary Databases
 |Database|Schema|Object|Name|Description|
