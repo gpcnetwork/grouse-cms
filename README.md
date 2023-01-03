@@ -88,7 +88,7 @@ Secure views of PCORnet CDM derived from **CMS RIF files**
 Secure views of PCORnet CDM derived from **GPC sites' electronic medical records**. `<XX>` represents site's abbreviation (ALLINA, IHC, KUMC, MCRI, MCW, MU, UIOWA, UNMC, UTHOUSTON, UTHSCSA, UTSW, UU, WASHU) and the checkbox
 |CDM View|ALLINA|IHC|KUMC|MCRI|MCW|MU|UIOWA|UNMC|UTHOUSTON|UTHSCSA|UTSW|UU|WASHU|
 |--------|------|---|----|----|---|--|-----|----|---------|-------|----|--|-----|
-|V_DEID_CONDITION|<ul><li>- [ ] </li></ul>|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|
+|V_DEID_CONDITION|&#x2611|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|
 |V_DEID_DEATH|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]|[x]||[x]|
 |V_DEID_DEATH_CAUSE||||||||||||||
 |V_DEID_DEMOGRAPHIC||||||||||||||
