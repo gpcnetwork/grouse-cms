@@ -72,7 +72,7 @@ For fully automated transformation, you can run `c2p/transform_full.py` on the c
 # Database Catalog
 ## Main CDM Database - `GROUSE_DEID_DB`
 ### Schema - `CMS_PCORNET_CDM` 
-Secure views of PCORnet CDM derived from CMS RIF files
+Secure views of PCORnet CDM derived from **CMS RIF files**
 |CDM View|Individual #|Encounter #|Observation #|
 |--------|------------|-----------|-------------|
 |V_DEID_ADDRESS_HISTORY||||
@@ -85,7 +85,7 @@ Secure views of PCORnet CDM derived from CMS RIF files
 |V_DEID_PROCEDURES||||
 
 ### Schema - `PCORNET_CDM_<XX>`
-Secure views of PCORnet CDM derived from GPC sites' EMR data. `<XX>` represents site's name abbreviation (ALLINA, IHC, KUMC, MCRI, MCW, MU, UIOWA, UNMC, UTHOUSTON, UTHSCSA, UTSW, UU, WASHU) 
+Secure views of PCORnet CDM derived from **GPC sites' electronic medical records**. `<XX>` represents site's name abbreviation (ALLINA, IHC, KUMC, MCRI, MCW, MU, UIOWA, UNMC, UTHOUSTON, UTHSCSA, UTSW, UU, WASHU) 
 |CDM View|ALLINA|IHC|KUMC|MCRI|MCW|MU|UIOWA|UNMC|UTHOUSTON|UTHSCSA|UTSW|UU|WASHU|
 |--------|------|---|----|----|---|--|-----|----|---------|-------|----|--|-----|
 |V_DEID_CONDITION||||||||||||||
