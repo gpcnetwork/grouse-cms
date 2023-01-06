@@ -24,49 +24,32 @@ For more details on GROUSE CMS DUA protocol, security policy and procedures, as 
 # Data Resources
 ## Medicare Research Identifiable Files (RIF)
 Currently, the GPC coordinating center (GPC CC) recieves Medicare RIF files via windows compatible delivery media (i.e. USB hard drive, DVD, CD) from CMS chronic condition warehouse (CCW), or NewWave-GDIT, by mail. The raw files are in a compressed and encrypted format, called [Self-Decrypting Archives (SDAs)](https://innovation.cms.gov/files/x/bundled-payments-for-care-improvement-learning-area-size-info-doc.pdf). SDAs are stand-along executables that can only be decrypted and decompressed with encryption keys sent from CMS to GPC CC in separate secured email. After decryption and decompression each SDA executable, the actual data file (`.dat`) and the metadata file (`.fts`) and two additional (`.sas`) files were made available for downstream processing. GPC CC has implementated an ETL process leveraging the following key resources: AWS S3 bucket, AWS IAM, AWS Secret Manager, and Snowflake database. 
+- **Medicare Enrollment and Beneficiary-Level (MBSF) file**: MBSF file, or denominator file, is created annually and contains demographic entitlement and enrollment data for beneficiaries who: 1) were part of the user-requested sample; 2) were documented as being alive for some part of the reference year; and, 3) were enrolled in the Medicare program during the file’s reference year. 
+- **Medicare Provider Analysis and Review (MedPAR)**: The MedPAR file includes all Part A short stay, long stay, and skilled nursing facility (SNF) bills for each calendar year. MedPAR contains one summarized record per admission. Each record includes up to 25 diagnoses (ICD9/ICD10) and 25 procedures ((ICD9/ICD10) provided during the hospitalization
+- **Outpatient Claims**: The outpatient file contains Part B claims for 100 percent for each calendar year from institutional outpatient providers. Examples of institutional outpatient providers include hospital outpatient departments, rural health clinics, renal dialysis facilities, outpatient rehabilitation facilities, comprehensive outpatient rehabilitation facilities, community mental health centers. In and out surgeries performed in a hospital will be in the hospital outpatient file, while bills for surgeries performed in freestanding surgical centers appear in the carrier claims, not in the outpatient file.
+- **Carrier Claims (NCH)**: Since 1991, the Center for Medicare & Medicaid Services (CMS) has collected physician/supplier (Part B) bills for 100 percent of all claims. These bills, known as the National Claims History (NCH) records, are largely from physicians although the file also includes claims from other non-institutional providers such as physician assistants, clinical social workers, nurse practitioners, independent clinical laboratories, ambulance providers, and stand-alone ambulatory surgical centers. The claims are processed by carriers working under contract to CMS. Each carrier claim must include a Health Care Procedure Classification Code (HCPCS) to describe the nature of the billed service. The HCPCS is composed primarily of CPT-4 codes developed by the American Medical Association, with additional codes specific to CMS. Each HCPCS code on the carrier bill must be accompanied by a diagnosis code (ICD9, ICD10), providing a reason for the service. In addition, each bill has the fields for the dates of service, reimbursement amount, encrypted provider numbers (e.g., UPIN, NPI), and beneficiary demographic data.
+- **Durable Medical Equipment Claims (DME)**: The Durable Medical Equipment (DME) file contains fee-for-service claims submitted by Durable Medical Equipment suppliers to the DME Medicare Administrative Contractor (MAC).
+- **Part-D Drug Event**: When a Medicare beneficiary with Part D coverage fills a prescription, the prescription drug plan submits a record to CMS. The PDE file includes all transactions covered by the Medicare prescription drug plan for both Prescription Drug Plans (PDPs) and Medicare Advantage Prescription Drug Plans (MA-PDs).
 
-### Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
-The extract, load and transform (ELT) process can be summarised in the diagram below
+## Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
+For better interoperatability, we have transformed most parts of the Medicare RIF files (only FFS claims) into PCORnet CDM format except for charges and costs. We are currently working on developing transformation codes for Medicare Advantage data files, Medicaid TAF files, as well as designing and developing the process of augmenting PCORnet CDM to contain economic data transformed from Medicare/Medicaid charges and costs data.
 
-![workflow](res/elt-workflow.png)
+Full technical details on data extraction, loading and transformation can be found in the following wiki page: 
+> [Transform CMS RIF files into PCORnet CDM](https://github.com/gpcnetwork/grouse-cms/wiki/Transform-CMS-RIF-files-into-PCORnet-CDM) 
+ 
 
-#### Extract and Load 
-- A: [load source] The source SDAs files were first uploaded to a designated, encrypted S3 bucket via secured upload (TLS/SSL) 
-- B: [configure development environment] Properly configure the chosen developer environment (e.g., local laptop, AWS cloud9 IDE, EC2 instance) to be accessible to source S3 bucket and S3 Secret Manager
-- C: [install dependencies] Run `bash ./dep/setup.py` to install all required dependency libraries specified in the `./dep/requirement.txt` file
-- D: [create config file] Open `./src/config.json` and fill out or modify required configuration information needed for running all the staging and transformation scripts
-- E: [decrypt and decompress] Run `./src/stage/decrypt.py` in the configured developer environment  
-- F: [extract and load] Run `./src/stage/stage_cms_care.py` in the configured developer environment  
+**********************************************************************************************
 
-#### Transformation to PCORnet CDM
-To improve interoperatability, we have implemented a process of transforming source Medicare RIF schema into PCORnet Common Data Model schema. Current transformation process is specific to Snowflake database. However, it can be easily adopted to PostGresql or MangoDB database backend (which supports stored procedure in javascript) but will require some adaptation to equivalent function objects in other types of databases. The following data lineage diagram demystifies how transformation is implemented associating the `.sql` scripts with source, intermediate, and target tables. The following list of entity relation diagrams (ERD) provides full data lineage details from source CMS RIF files to target CDM table (i.e., c2p transform).
+# Electronic Health Records (EHR)
 
-- [ERD - c2p transform - enrollment](res/c2p_transform_enrollment.png)
-- [ERD - c2p transform - demographic](res/c2p_transform_demographic.png)
-- [ERD - c2p transform - death](res/c2p_transform_death.png)
-- [ERD - c2p transform - lds_address_history](res/c2p_transform_lds_address_history.png)
-- [ERD - c2p transform - encounter](res/c2p_transform_encounter.png)
-- [ERD - c2p transform - diagnosis](res/c2p_transform_diagnosis.png)
-- [ERD - c2p transform - procedures](res/c2p_transform_procedures.png)
-- [ERD - c2p transform - dispensing](res/c2p_transform_dispensing.png)
-- [ERD - c2p transform - obs_comm](res/c2p_transform_obs_comm.png)
-- [ERD - c2p transform - payer_plan_period](res/c2p_transform_payer_plan_period.png)
-- [ERD - c2p transform - cost](res/c2p_transform_cost.png)
 
-G: Run parts of the `c2p/transform_step.py` on the configured developer environment. You may want to start with running the transformation step by step to identify and fix any bugs should there be any. The script consist of three parts: 
-1) create table shells by running the DDL (data definition lanugaue) scripts in `./src/ddl`; 
-2) load reference concept mapping tables pre-loaded in `./ref/` folder; 
-3) run stored procedures in `./src/stored_procedures` for staging and transformation; 
-3) stage source CMS tables in the staging area in a 1-to-1 fashion (i.e. 1 source table to 1 target table), including applying all the mapping tables and creating de-duplication indices (`./src/dml`); 
-4) perform the final transformation step and write to target CDM table (`./src/dml`).  
+**********************************************************************************************
 
-For fully automated transformation, you can run `c2p/transform_full.py` on the configured developer environment without commenting out any steps, which runs all the steps mentioned above without requiring any human intervention. However, we would recommend running the stepwise transformation at least once to validate the underlying sql scripts.     
-
-## Linkage and Deidentification
-### Linkage
+# Linkage and Deidentification
+## Linkage
 As described in full details in the GROUSE paper mentioned above, the deterministic data linkage between CMS claims and GPC CDM is provided by the CMS contractor, NewWave-GDIT, leveraging finder file and CMS referential database. 
 
-### Deidentification
+## Deidentification
 Abide by current GROUSE protocol, research data is required to be fully de-identified. We implemented the following [safe harbor rules](https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html):
 
 1. Remove all the following [HIPAA-recognized identifiers](https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html#standard) from the data (note that many of them were not provided in source files): 
@@ -92,38 +75,33 @@ Abide by current GROUSE protocol, research data is required to be fully de-ident
 - At the time of data release, if the individual reaches the age of 90, his/her birth date will be masked as 1900-01-01. This rule is in consistency with [PCORnet CDM general guidance](https://pcornet.org/wp-content/uploads/2022/01/PCORnet-Common-Data-Model-v60-2020_10_221.pdf).
 
 3. Location Obfuscation
-- All geographic subdivisions smaller than a state, including street address, city, county, precinct, ZIP code, and their equivalent geocodes, except for the initial **three digits of the ZIP code** if, according to the current publicly available data from the Bureau of the Census
+- All geographic subdivisions smaller than a state, including street address, city, county, precinct, ZIP code, and their equivalent geocodes, except for the initial **three digits of the ZIP code** if, according to the current publicly available data from the Bureau of the Census. 
 
-The linkage and deidentification process can be summarised in the diagram below
+Full technical details of performing linkage and deidentification can be found from the following wiki page: 
+> [Linkage and Deidentification](https://github.com/gpcnetwork/grouse-cms/wiki/Linkage-and-Deidentification).
 
-![linkage-deid](res/linkage-deid-workflow.png)
-
-- A: [load source] The source SDAs files were first uploaded to a designated, encrypted S3 bucket via secured upload (TLS/SSL) 
-- B: [configurattion and preparation] The same as steps B to D from the ELT process above
-- C: [decrypt and decompress] Run `./src/stage/decrypt.py` in the configured developer environment  
-- D: [extract and load] Run `./src/stage/stage_cms_care.py`, `./src/stage/stage_xwalk.py`, and `./src/stage/stage_cdm.py` to stage all needed source files onto snowflake
-- E-F: [match and align] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid_stg.sql` and `./src/link_deid/dml/cdm_link_deid_stg.sql`to create intermediate tables specifying all de-identification parameters
-- G-I: [deidentify and secure share] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid.sql` and `./src/link_deid/dml/cdm_link_deid.sql` and create LDS and De-identified tables and views of all the CDM data. 
 
 **********************************************************************************************
 
-# PCORnet Common Data Model
+# Geocoding and Public Data Files
+
 
 **********************************************************************************************
 
-# Concept Ontology Metadata
+# Auxilliary Data Files
+
 
 **********************************************************************************************
-
-# Geocoded Data
-
 
 ---------------------------------------------------------------------------------------------------
 References: 
 - [CMS to PCORnet CDM](https://github.com/PCORnet-DRN-OC/Medicare-Data-Transformation)
 - [CMS to OMOP CDM](https://github.com/OHDSI/ETL-CMS)
 - [CMS to Sentinel CDM](https://dev.sentinelsystem.org/projects/DCMS/repos/cms_medicare_ffs_datamart/browse?at=CMS_FFS_SCDMv8)
-
+- [CMS Hospital Quality Initiative](https://www.cms.gov/Medicare/Quality-Initiatives-Patient-Assessment-Instruments/HospitalQualityInits)
+- [Accessing Medicare Data at the Centers for Medicare and Medicaid Services using SAS](https://www.sas.com/content/dam/SAS/support/en/sas-global-forum-proceedings/2020/4285-2020.pdf)
+- [Identify MA beneficiaries from MBSF](https://resdac.org/articles/identifying-medicare-managed-care-beneficiaries-master-beneficiary-summary-or-denominator)
+- [MEDPAR vs. Inpatient file](https://resdac.org/articles/differences-between-inpatient-and-medpar-files)
 
 ---------------------------------------------------------------------------------------------------
 *Copyright (c) 2021 The Curators of University of Missouri* <br/>
