@@ -83,15 +83,36 @@ Full technical details of performing linkage and deidentification can be found f
 
 **********************************************************************************************
 
-# Geocoding and Public Data Files
-
-
-**********************************************************************************************
-
 # Auxilliary Data Files
+## LOINC Ontology 
+Logical Observation Identifiers Names and Codes (LOINC) is a database and universal standard for identifying medical laboratory observations. The LOINC database was downloaded from https://loinc.org/downloads/.
 
+## RXNORM Ontology
+RxNorm provides normalized names for clinical drugs and links its names to many of the drug vocabularies commonly used in pharmacy management and drug interaction software, including those of First Databank, Micromedex, Multum, and Gold Standard Drug Database. The RXNORM ontology files were downloaded from https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html with under appropriate licensing. 
+
+## UMLS Metathesaurus
+The UMLS Metathesaurus is a large biomedical thesaurus that is organized by concept, or meaning. It links synonymous names from over 200 different source vocabularies. The Metathesaurus also identifies useful relationships between concepts and preserves the meanings, concept names, and relationships from each vocabulary. The UMLS Metathesaurus full dataset were downloaded from https://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html under appropriate licensing. 
+
+## Grouper Valuesets
+We have also released the following grouper valusets for research use: 
+- ICD to [Clinical Classifications Software (CCS)](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp) mappings
+- CPT to [Clinical Classifications Software (CCS)](https://www.hcup-us.ahrq.gov/toolssoftware/ccs/ccs.jsp) mappings
+- ICD to [Phecode](https://phewascatalog.org/phecodes) mappings
 
 **********************************************************************************************
+
+# Geocoding and Public Data Files
+Medicare and Medicaid claims (CMS RIF files) contains Zip+4 information for patients at each year of enrollment. We mapped the Zip+4 to Census Block Group and create a GEOID, which can be used to link to the following publically available, community-level data files. 
+
+## American Community Survey
+The American Community Survey (ACS) is an ongoing survey that provides data every year -- giving communities the current information they need to plan investments and services. The ACS covers a broad range of topics about social, economic, demographic, and housing characteristics of the U.S. population. We have loaded a selective sets of ACS variables from 2019 release. We have loaded the curated ACS data from https://github.com/UNMC-CRANE/SDH, and made it linkable to other datasets. 
+
+## Area Deprivation Index
+The Area Deprivation Index (ADI) is based on a measure created by the Health Resources & Services Administration (HRSA) over three decades ago, and has since been refined, adapted, and validated to the Census Block Group neighborhood level by Amy Kind, MD, PhD and her research team at the University of Wisconsin-Madison. We have loaded the 2020 ADI data downloaded from https://www.neighborhoodatlas.medicine.wisc.edu/ and made it linkable to other datasets. 
+
+## Rural-Urban Commuting Area Codes
+The rural-urban commuting area (RUCA) codes classify U.S. census tracts using **measures of population density, urbanization, and daily commuting**. We have loaded the 2010 RUCA (most recent release) from https://www.ers.usda.gov/data-products/rural-urban-commuting-area-codes/ and made it likable to other datasets. 
+
 
 ---------------------------------------------------------------------------------------------------
 References: 
