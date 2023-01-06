@@ -19,16 +19,18 @@ For more details on GROUSE CMS DUA protocol, security policy and procedures, as 
 - [System Security Policy Deck](doc/SSP_Policy_Deck.pdf)
 - [GROUSE Private Github Repository](https://github.com/gpcnetwork/GROUSE): _this private github repo contains more sensitive information about the environment, please reach out to ask-umbmi@umsystem.edu for access_
 
+**********************************************************************************************
 
-# Medicare Research Identifiable Files (RIF)
+# Data Resources
+## Medicare Research Identifiable Files (RIF)
 Currently, the GPC coordinating center (GPC CC) recieves Medicare RIF files via windows compatible delivery media (i.e. USB hard drive, DVD, CD) from CMS chronic condition warehouse (CCW), or NewWave-GDIT, by mail. The raw files are in a compressed and encrypted format, called [Self-Decrypting Archives (SDAs)](https://innovation.cms.gov/files/x/bundled-payments-for-care-improvement-learning-area-size-info-doc.pdf). SDAs are stand-along executables that can only be decrypted and decompressed with encryption keys sent from CMS to GPC CC in separate secured email. After decryption and decompression each SDA executable, the actual data file (`.dat`) and the metadata file (`.fts`) and two additional (`.sas`) files were made available for downstream processing. GPC CC has implementated an ETL process leveraging the following key resources: AWS S3 bucket, AWS IAM, AWS Secret Manager, and Snowflake database. 
 
-# Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
+### Transforming Medicare and Medicaid Research Identifiable Files into PCORnet CDM
 The extract, load and transform (ELT) process can be summarised in the diagram below
 
 ![workflow](res/elt-workflow.png)
 
-### Extract and Load 
+#### Extract and Load 
 - A: [load source] The source SDAs files were first uploaded to a designated, encrypted S3 bucket via secured upload (TLS/SSL) 
 - B: [configure development environment] Properly configure the chosen developer environment (e.g., local laptop, AWS cloud9 IDE, EC2 instance) to be accessible to source S3 bucket and S3 Secret Manager
 - C: [install dependencies] Run `bash ./dep/setup.py` to install all required dependency libraries specified in the `./dep/requirement.txt` file
@@ -36,7 +38,7 @@ The extract, load and transform (ELT) process can be summarised in the diagram b
 - E: [decrypt and decompress] Run `./src/stage/decrypt.py` in the configured developer environment  
 - F: [extract and load] Run `./src/stage/stage_cms_care.py` in the configured developer environment  
 
-### Transformation to PCORnet CDM
+#### Transformation to PCORnet CDM
 To improve interoperatability, we have implemented a process of transforming source Medicare RIF schema into PCORnet Common Data Model schema. Current transformation process is specific to Snowflake database. However, it can be easily adopted to PostGresql or MangoDB database backend (which supports stored procedure in javascript) but will require some adaptation to equivalent function objects in other types of databases. The following data lineage diagram demystifies how transformation is implemented associating the `.sql` scripts with source, intermediate, and target tables. The following list of entity relation diagrams (ERD) provides full data lineage details from source CMS RIF files to target CDM table (i.e., c2p transform).
 
 - [ERD - c2p transform - enrollment](res/c2p_transform_enrollment.png)
@@ -60,9 +62,11 @@ G: Run parts of the `c2p/transform_step.py` on the configured developer environm
 
 For fully automated transformation, you can run `c2p/transform_full.py` on the configured developer environment without commenting out any steps, which runs all the steps mentioned above without requiring any human intervention. However, we would recommend running the stepwise transformation at least once to validate the underlying sql scripts.     
 
-# Linkage and Deidentification
+## Linkage and Deidentification
+### Linkage
 As described in full details in the GROUSE paper mentioned above, the deterministic data linkage between CMS claims and GPC CDM is provided by the CMS contractor, NewWave-GDIT, leveraging finder file and CMS referential database. 
 
+### Deidentification
 Abide by current GROUSE protocol, research data is required to be fully de-identified. We implemented the following [safe harbor rules](https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html):
 
 1. Remove all the following [HIPAA-recognized identifiers](https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html#standard) from the data (note that many of them were not provided in source files): 
@@ -101,9 +105,15 @@ The linkage and deidentification process can be summarised in the diagram below
 - E-F: [match and align] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid_stg.sql` and `./src/link_deid/dml/cdm_link_deid_stg.sql`to create intermediate tables specifying all de-identification parameters
 - G-I: [deidentify and secure share] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid.sql` and `./src/link_deid/dml/cdm_link_deid.sql` and create LDS and De-identified tables and views of all the CDM data. 
 
+**********************************************************************************************
+
 # PCORnet Common Data Model
 
+**********************************************************************************************
+
 # Concept Ontology Metadata
+
+**********************************************************************************************
 
 # Geocoded Data
 
