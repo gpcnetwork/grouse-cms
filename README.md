@@ -13,6 +13,7 @@ ocab269, https://doi.org/10.1093/jamia/ocab269*
 ```
 
 For more details on GROUSE CMS DUA protocol, security policy and procedures, as well as other technical documents, please refer to the following resources: 
+- [GROUSE Master Protocol]()
 - [GROUSE CMS Executive Summary](doc/CMS_Executive_Summary.pdf)
 - [GROUSE Data Management Plan Approval](doc/CMS_DPSP_DMP_Approval.pdf)
 - [System Security Policy Deck](doc/SSP_Policy_Deck.pdf)
@@ -62,7 +63,7 @@ For fully automated transformation, you can run `c2p/transform_full.py` on the c
 # Linkage and Deidentification
 As described in full details in the GROUSE paper mentioned above, the deterministic data linkage between CMS claims and GPC CDM is provided by the CMS contractor, NewWave-GDIT, leveraging finder file and CMS referential database. 
 
-Abind by current GROUSE protocol, research data is required to be fully de-identified. We implemented the following [safe harbor rules](https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html):
+Abide by current GROUSE protocol, research data is required to be fully de-identified. We implemented the following [safe harbor rules](https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html):
 
 1. Remove all the following [HIPAA-recognized identifiers](https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html#standard) from the data (note that many of them were not provided in source files): 
 - (A) Names
