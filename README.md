@@ -16,7 +16,7 @@ For more details on GROUSE CMS DUA protocol, security policy and procedures, as 
 - [GROUSE CMS Executive Summary](doc/CMS_Executive_Summary.pdf)
 - [GROUSE Data Management Plan Approval](doc/CMS_DPSP_DMP_Approval.pdf)
 - [System Security Policy Deck](doc/SSP_Policy_Deck.pdf)
-- [GROUSE private github repository](https://github.com/gpcnetwork/GROUSE): _this private github repo contains more sensitive information about the environment, please reach out to ask-umbmi@umsystem.edu for access_
+- [GROUSE Private Github Repository](https://github.com/gpcnetwork/GROUSE): _this private github repo contains more sensitive information about the environment, please reach out to ask-umbmi@umsystem.edu for access_
 
 
 # Medicare Research Identifiable Files (RIF)
@@ -60,6 +60,37 @@ G: Run parts of the `c2p/transform_step.py` on the configured developer environm
 For fully automated transformation, you can run `c2p/transform_full.py` on the configured developer environment without commenting out any steps, which runs all the steps mentioned above without requiring any human intervention. However, we would recommend running the stepwise transformation at least once to validate the underlying sql scripts.     
 
 # Linkage and Deidentification
+As described in full details in the GROUSE paper mentioned above, the deterministic data linkage between CMS claims and GPC CDM is provided by the CMS contractor, NewWave-GDIT, leveraging finder file and CMS referential database. 
+
+Abind by current GROUSE protocol, research data is required to be fully de-identified. We implemented the following [safe harbor rules](https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html):
+
+1. Remove all the following [HIPAA-recognized identifiers](https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/index.html#standard) from the data (note that many of them were not provided in source files): 
+- (A) Names
+- (D) Telephone Numbers
+- (L) Vehicle identifiers and serial numbers, including license plate numbers
+- (E) Fax numbers
+- (M) Device identifiers and serial numbers
+- (F) Email addresses
+- (N) Web Universal Resource Locators (URLs)
+- (G) Social security numbers
+- (O) Internet Protocol (IP) addresses
+- (H) Medical record numbers
+- (P) Biometric identifiers, including finger and voice prints
+- (I) Health plan beneficiary numbers
+- (Q) Full-face photographs and any comparable images
+- (J) Account numbers
+- (R) Any other unique identifying number, characteristic, or code, except as permitted (e.g., fully deidentified identifier with no possibility of reidentifying an individual even linking to other data resources)
+- (K) Certificate/license numbers
+
+2. Date Obfuscation
+- Randomly shift all real dates by a number between 1 and 365 at individual level. 
+- At the time of data release, if the individual reaches the age of 90, his/her birth date will be masked as 1900-01-01. This rule is in consistency with [PCORnet CDM general guidance](https://pcornet.org/wp-content/uploads/2022/01/PCORnet-Common-Data-Model-v60-2020_10_221.pdf).
+
+3. Location Obfuscation
+- All geographic subdivisions smaller than a state, including street address, city, county, precinct, ZIP code, and their equivalent geocodes, except for the initial **three digits of the ZIP code** if, according to the current publicly available data from the Bureau of the Census
+
+The linkage and deidentification process can be summarised in the diagram below
+
 ![linkage-deid](res/linkage-deid-workflow.png)
 
 - A: [load source] The source SDAs files were first uploaded to a designated, encrypted S3 bucket via secured upload (TLS/SSL) 
@@ -69,61 +100,12 @@ For fully automated transformation, you can run `c2p/transform_full.py` on the c
 - E-F: [match and align] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid_stg.sql` and `./src/link_deid/dml/cdm_link_deid_stg.sql`to create intermediate tables specifying all de-identification parameters
 - G-I: [deidentify and secure share] Run stored procedures `./src/link_deid/stored_procedures/cdm_link_deid.sql` and `./src/link_deid/dml/cdm_link_deid.sql` and create LDS and De-identified tables and views of all the CDM data. 
 
-# Database Catalog
-## Main CDM Database - `GROUSE_DEID_DB`
-### Schema - `CMS_PCORNET_CDM` 
-Secure views of PCORnet CDM derived from **CMS RIF files**
-|CDM View|Individual # (%)|Encounter #|Observation #|
-|--------|----------------|-----------|-------------|
-|V_DEID_ADDRESS_HISTORY||NA||
-|V_DEID_DEATH||NA||
-|V_DEID_DEMOGRAPHIC||NA||
-|V_DEID_DIAGNOSIS||||
-|V_DEID_DISPENSING||||
-|V_DEID_ENCOUNTER||||
-|V_DEID_ENROLLMENT||NA||
-|V_DEID_PROCEDURES||||
+# PCORnet Common Data Model
 
-### Schema - `PCORNET_CDM_<XX>`
-Secure views of PCORnet CDM derived from **GPC sites' electronic medical records**. `<XX>` represents site's abbreviation (ALLINA, IHC, KUMC, MCRI, MCW, MU, UIOWA, UNMC, UTHOUSTON, UTHSCSA, UTSW, UU, WASHU) and the checkbox
-|CDM View*|ALLINA|IHC|KUMC|MCRI|MCW|MU|UIOWA|UNMC|UTHOUSTON|UTHSCSA|UTSW|UU|WASHU|
-|---------|------|---|----|----|---|--|-----|----|---------|-------|----|--|-----|
-|V_DEID_CONDITION|C|C|C|C|C|C|C|C|C|C|C|C|C|
-|V_DEID_DEATH|C|C|C|C|C|C|C|C|C|C|C|C|C|
-|V_DEID_DEATH_CAUSE||||||||||||||
-|V_DEID_DEMOGRAPHIC|C|C|C|C|C|C|C|C|C|C|C|C|C|
-|V_DEID_DIAGNOSIS||||||||||||||
-|V_DEID_DISPENSING||||||||||||||
-|V_DEID_ENCOUNTER||||||||||||||
-|V_DEID_ENROLLMENT||||||||||||||
-|V_DEID_IMMUNIZATION||||||||||||||
-|V_DEID_LAB_RESULT_CM||||||||||||||
-|V_DEID_MED_ADMIN||||||||||||||
-|V_DEID_OBS_CLIN||||||||||||||
-|V_DEID_OBS_GEN||||||||||||||
-|V_DEID_PCORNET_TRIAL||||||||||||||
-|V_DEID_PRESCRIBING||||||||||||||
-|V_DEID_PROCEDURES||||||||||||||
-|V_DEID_PRO_CM||||||||||||||
-|V_DEID_VITAL||||||||||||||
+# Concept Ontology Metadata
 
-* C: consistently populated
-* P: partially populated
-* N: not populated/empty
+# Geocoded Data
 
-## Auxciliary Databases
-|Database|Schema|Object|Name|Description|
-|--------|------|------|----|-----------|
-|NPPES_NPI_REGISTRY|NPPES_FEB|BASE TABLE|NPIDATA|Main NPPES database|
-|NPPES_NPI_REGISTRY|NPPES_FEB|BASE TABLE|NPI_ENDPOINTS||
-|NPPES_NPI_REGISTRY|NPPES_FEB|BASE TABLE|NPI_OTHER_NAMES|Other names for NPI|
-|NPPES_NPI_REGISTRY|NPPES_FEB|BASE TABLE|NPI_PRACTICE_LOCATION|More Detailed information on Practive Location|
-|NPPES_NPI_REGISTRY|NPPES_FEB|BASE TABLE|NPI_TAXONOMY|NPPES Taxonomy Descriptions|
-|ONTOLOGY|ACT_ONTOLOGY|BASE TABLE|*|All ACT ontology tables|
-|ONTOLOGY|GROUPER_VALUESETS|BASE TABLE|*|Multiple valuesets extracted from public resources|
-|ONTOLOGY|LOINC|BASE TABLE|*|LOINC data dictionary|
-|ONTOLOGY|RXNORM|BASE TABLE|*|RXNORM data dictionary|
-|ONTOLOGY|UMLS_STAGE|BASE TABLE|*|UMLS Metathesaurus|
 
 ---------------------------------------------------------------------------------------------------
 References: 
