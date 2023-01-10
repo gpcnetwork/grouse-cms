@@ -22,6 +22,17 @@ For more details on GROUSE CMS DUA protocol, security policy and procedures, as 
 **********************************************************************************************
 
 # Data Resources
+## Electronic Health Records (EHR) and PCORnet Common Data Model (CDM)
+GPC is a PCORnet Clinical Data Research Network (CDRN) bringing together a diverse population of 30 million patients from 13 health systems across 9 Midwestern states (with portions of periperal states). All GPC sites have aggregated longitudinal EHR data using the PCORnet CDM ensuring interoperability of data across multiple institutions.  
+
+![gpc-pat-count](res/img/gpc-pat-count.png)
+
+![gpc-pat-map](res/img/gpc-pat-map.png)
+
+The current version of PCORnet CDM integrated on GROUSE contains curated clinical data over `2010-2020` from all 13 GPC sites, which includes patient demographics, vital signs, smoking history, labs mapped to LOINC codes, prescribing medication mapped to RXNORMs, dispensing medication mapped to NDC, procedures mapped to CPT/HCPCS and ICD10, diagnoses mapped to ICD9 and ICD10 codes. See [PCORnet CDM v6.0 Specifications](https://pcornet.org/wp-content/uploads/2022/01/PCORnet-Common-Data-Model-v60-2020_10_221.pdf) for mode details. 
+
+*********************************************************************************************
+
 ## Medicare Research Identifiable Files (RIF)
 Currently, the GPC coordinating center (GPC CC) recieves Medicare RIF files via windows compatible delivery media (i.e. USB hard drive, DVD, CD) from CMS chronic condition warehouse (CCW), or NewWave-GDIT, by mail. The raw files are in a compressed and encrypted format, called [Self-Decrypting Archives (SDAs)](https://innovation.cms.gov/files/x/bundled-payments-for-care-improvement-learning-area-size-info-doc.pdf). SDAs are stand-along executables that can only be decrypted and decompressed with encryption keys sent from CMS to GPC CC in separate secured email. After decryption and decompression each SDA executable, the actual data file (`.dat`) and the metadata file (`.fts`) and two additional (`.sas`) files were made available for downstream processing. GPC CC has implementated an ETL process leveraging the following key resources: AWS S3 bucket, AWS IAM, AWS Secret Manager, and Snowflake database. 
 - **Medicare Enrollment and Beneficiary-Level (MBSF) file**: MBSF file, or denominator file, is created annually and contains demographic entitlement and enrollment data for beneficiaries who: 1) were part of the user-requested sample; 2) were documented as being alive for some part of the reference year; and, 3) were enrolled in the Medicare program during the file’s reference year. 
@@ -37,11 +48,6 @@ For better interoperatability, we have transformed most parts of the Medicare RI
 Full technical details on data extraction, loading and transformation can be found in the following wiki page: 
 > [Transform CMS RIF files into PCORnet CDM](https://github.com/gpcnetwork/grouse-cms/wiki/Transform-CMS-RIF-files-into-PCORnet-CDM) 
  
-
-**********************************************************************************************
-
-# Electronic Health Records (EHR)
-
 
 **********************************************************************************************
 
