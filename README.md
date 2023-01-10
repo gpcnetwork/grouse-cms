@@ -29,7 +29,7 @@ GPC is a PCORnet Clinical Data Research Network (CDRN) bringing together a diver
 
 ![gpc-pat-map](res/img/gpc-pat-map.png)
 
-The current version of PCORnet CDM integrated on GROUSE contains curated clinical data over `2010-2020` from all 13 GPC sites, which includes patient demographics, vital signs, smoking history, labs mapped to LOINC codes, prescribing medication mapped to RXNORMs, dispensing medication mapped to NDC, procedures mapped to CPT/HCPCS and ICD10, diagnoses mapped to ICD9 and ICD10 codes. See [PCORnet CDM v6.0 Specifications](https://pcornet.org/wp-content/uploads/2022/01/PCORnet-Common-Data-Model-v60-2020_10_221.pdf) for mode details. 
+The current version of PCORnet CDM integrated on GROUSE contains curated clinical data over `2010-2020` from all 13 GPC sites, which includes patient demographics, vital signs, smoking history, labs mapped to LOINC codes, prescribing medication mapped to RXNORMs, dispensing medication mapped to NDC, procedures mapped to CPT/HCPCS and ICD10, diagnoses mapped to ICD9 and ICD10 codes. See [PCORnet CDM v6.0 Specifications](https://pcornet.org/wp-content/uploads/2022/01/PCORnet-Common-Data-Model-v60-2020_10_221.pdf) for more details. 
 
 *********************************************************************************************
 
