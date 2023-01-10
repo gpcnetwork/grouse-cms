@@ -1,5 +1,5 @@
 # GPC Reusable Observable Study Environment (GROUSE)
-The Greater Plains Collaborative Clinical Data Research Networks (GPC CDRNs), is one of the 11 CDRNs included in PCORnet to further goals of the learning Health System and help to answer questions that are important to patient, clinician, and health system stakeholders. Current GPC includes 12 leading medical centers in 11 states (Kansas, Missouri, Iowa, Wisconsin, Nebraska, Minnesota, Texas, Utah, South Dakota, North Dakota and Indiana) committed to a shared vision of improving healthcare delivery through ongoing learning, adoption of evidence - based practices, and active research dissemination.
+The Greater Plains Collaborative Clinical Data Research Networks (GPC CDRNs), is one of the 11 CDRNs included in PCORnet to further goals of the learning Health System and help to answer questions that are important to patient, clinician, and health system stakeholders. Current GPC includes 13 leading medical centers in 9 states (Kansas, Missouri, Iowa, Wisconsin, Nebraska, Minnesota, Texas, Utah, Idaho, Nevada, Wyoming) committed to a shared vision of improving healthcare delivery through ongoing learning, adoption of evidence - based practices, and active research dissemination.
 
 In order to understand all types of care a patient receives without being restricted to specific health systems, the GPC Reusable Observable Unified Study Environment (GROUSE) – a de-identified data resource, is created by merging CMS claims (covering the entire 11 states) with GPC site EMR data. GPC CDRN selected three types of conditions - one rare disease (amyotrophic lateral sclerosis), one common disease (breast cancer), and obesity, to a) quantify completeness of the health system-derived data repositories; and b) evaluate the distributions of health and care processes for the patients within the GPC versus the larger Medicare and Medicaid populations in our region to understand how studies of the GPC population generalize to the broader populations in our states. To acknowlege the usage of GROUSE data, please include the following citation in your publication: 
 
@@ -23,7 +23,7 @@ For more details on GROUSE CMS DUA protocol, security policy and procedures, as 
 
 # Data Resources
 ## Electronic Health Records (EHR) and PCORnet Common Data Model (CDM)
-GPC is a PCORnet Clinical Data Research Network (CDRN) bringing together a diverse population of 30 million patients from 13 health systems across 9 Midwestern states (with portions of periperal states). All GPC sites have aggregated longitudinal EHR data using the PCORnet CDM ensuring interoperability of data across multiple institutions.  
+GPC is a PCORnet Clinical Data Research Network (CDRN) bringing together a diverse population of 30 million patients from 13 health systems across 11 states (Kansas, Missouri, Iowa, Wisconsin, Nebraska, Minnesota, Texas, Utah, Idaho, Nevada, Wyoming, and portions of periperal states such as Chicago and Michigan). All GPC sites have aggregated longitudinal EHR data using the PCORnet CDM ensuring interoperability of data across multiple institutions.  
 
 ![gpc-pat-count](res/img/gpc-pat-count.png)
 
