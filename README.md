@@ -81,7 +81,9 @@ Abide by current GROUSE protocol, research data is required to be fully de-ident
 - At the time of data release, if the individual reaches the age of 90, his/her birth date will be masked as 1900-01-01. This rule is in consistency with [PCORnet CDM general guidance](https://pcornet.org/wp-content/uploads/2022/01/PCORnet-Common-Data-Model-v60-2020_10_221.pdf).
 
 3. Location Obfuscation
-- All geographic subdivisions smaller than a state, including street address, city, county, precinct, ZIP code, and their equivalent geocodes, except for the initial **three digits of the ZIP code** if, according to the current publicly available data from the Bureau of the Census. 
+- All geographic subdivisions smaller than a state, including street address, city, county, precinct, ZIP code, and their equivalent geocodes 
+    - _(not implemented yet) except for the initial **three digits of the ZIP code** if, according to the current publicly available data from the Bureau of the Census._
+- ADDRESSID and GEOCODEID are both deidentified
 
 Full technical details of performing linkage and deidentification can be found from the following wiki page: 
 > [Linkage and Deidentification](https://github.com/gpcnetwork/grouse-cms/wiki/Linkage-and-Deidentification).
