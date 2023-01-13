@@ -21,7 +21,7 @@ config_data = json.load(open(file=f'{dir_path}/config.json',encoding = "utf-8"))
 
 # load data and clean
 df_vs = pd.read_csv(config_data["sdoh_keys"]["acs_vs_url"],header = 0)
-df_vs.rename(columns={"GEOGRAPHY_ID": "FIPS_CT"}, inplace=True)
+df_vs.rename(columns={"GEOGRAPHY_ID": "FIPS_TR"}, inplace=True)
 
 # load metadata
 df_col = pd.read_csv(config_data["sdoh_keys"]["acs_col_url"])
@@ -41,7 +41,7 @@ with snowflake_conn as conn:
     load.SfExec_EnvSetup(conn.cursor(),params)
     
     # upload acs values data
-    params["tgt_table"] = "ACS_CT"
+    params["tgt_table"] = "ACS_TR"
     sql_generator = extract.SqlGenerator_HeaderURL(params["env_schema"],params["tgt_table"],list(df_vs.columns))
     conn.cursor().execute(sql_generator.GenerateDDL())
     load.SfWrite_PandaDF(conn,params,df_vs)

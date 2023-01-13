@@ -1,0 +1,78 @@
+SSA_Code,State,Postal_Abbr
+01,Alabama,AL
+02,Alaska,AK
+03,Arizona,AZ
+04,Arkansas,AR
+05,California,CA
+06,Colorado,CO
+07,Connecticut,CT
+08,Delaware,DE
+09,District of Columbia,DC
+10,Florida,FL
+11,Georgia,GA
+12,Hawaii,HI
+13,Idaho,ID
+14,Illinois,IL
+15,Indiana,IN
+16,Iowa,IA
+17,Kansas,KS
+18,Kentucky,KY
+19,Louisiana,LA
+20,Maine,ME
+21,Maryland,MD
+22,Massachusetts,MA
+23,Michigan,MI
+25,Mississippi,MN
+26,Missouri,MO
+27,Montana,MT
+28,Nebraska,NE
+29,Nevada,NV
+30,New Hampshire,NH
+31,New Jersey,NJ
+32,New Mexico,NM
+33,New York,NY
+34,North Carolina,NC
+35,North Dakota,ND
+36,Ohio,OH
+37,Oklahoma,OK
+38,Oregon,OR
+39,Pennsylvania,PA
+40,Puerto Rico,PR
+41,Rhode Island,RI
+42,South Carolina,SC
+43,South Dakota,SD
+44,Tennessee,TN
+45,Texas,TX
+46,Utah,UT
+47,Vermont,VT
+48,Virgin Islands,VI
+49,Virginia,VA
+50,Washington,WA
+51,West Virginia,WV
+52,Wisconsin,WI
+53,Wyoming,WY
+54,Africa,AF
+55,Asia,AS
+56,Canada,CA
+57,Central America and West Indies,CAWI
+58,Europe,EU
+59,Mexico,MX
+60,Oceania,OC
+61,Philippines,PH
+62,South America,SA
+63,U.S. Possessions,USP
+64,American Samoa,ASA
+65,Guam,GU
+66,Commonwealth of the Northern Marianas Islands,CWNMI
+67,Texas,TX
+68,Florida,FL
+69,Florida,FL
+70,Kansas,KS
+71,Louisiana,LA
+72,Ohio,OH
+73,Pennsylvania,PA
+74,Texas,TX
+80,Maryland,MD
+97,Northern Marianas,NMS
+98.Guam,GU
+99.American Samoa,ASA

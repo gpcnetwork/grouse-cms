@@ -7,7 +7,7 @@
 */
 
 -- initialize staging table
-create or replace table %s.PRIVATE_DEATH_STAGE (
+create or replace table PRIVATE_DEATH_STAGE (
      BENE_ID varchar(50) NOT NULL
     ,DEATH_DT date NULL
     ,V_DOD_SW varchar(1)
@@ -15,3 +15,5 @@ create or replace table %s.PRIVATE_DEATH_STAGE (
     ,SRC_TABLE varchar(30) NOT NULL
     ,SRC_DATE date NOT NULL
 );
+commit;
+

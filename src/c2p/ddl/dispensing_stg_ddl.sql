@@ -8,7 +8,7 @@
 
 -- initialize staging table
 use schema CMS_PCORNET_CDM_STAGING;
-create table PRIVATE_DISPENSING_STAGE (
+create or replace table PRIVATE_DISPENSING_STAGE (
      PDE_ID varchar(50) NOT NULL
 	,BENE_ID varchar(20) NOT NULL
     ,PRSCRBID varchar(20) NOT NULL

@@ -49,8 +49,6 @@ snowflake_conn = load.SnowflakeConnection(user,pwd,acct)
 with snowflake_conn as conn:
     # set up the snowflake environment
     params = config_data["snowflake_cms_admin_default"]
-    params["env_schema"] = "GEOID_MAPPING"
-    params["tgt_table"] = "ZIP9_MAPTO_CBG"
     load.SfExec_EnvSetup(conn.cursor(),params)
         
     # download, unzip, process and integrate
@@ -82,13 +80,27 @@ with snowflake_conn as conn:
         dfzip5 = dfzip5.drop(columns="ZIP_4").rename(columns = {'ZIP5':'ZIP_4'}).drop_duplicates()
         df3 = pd.concat([df,dfzip5])
         
-        # start upload to snowflake
+        # split table into:  
+        #  a) zip <-> BG mapping; and
+        params["env_schema"] = "GEOID_MAPPING"
+        params["tgt_table"] = "Z9_TO_BG"
+        df = df3[['ZIP_4','FIPS']].rename(columns = {'ZIP_4':'GEOID_FROM', 'FIPS':'GEOID_TO'}).drop_duplicates()
         if idx == 0:
-            sql_generator = extract.SqlGenerator_HeaderURL(params["env_schema"],params["tgt_table"],list(df3.columns))
+            sql_generator = extract.SqlGenerator_HeaderURL(params["env_schema"],params["tgt_table"],list(df.columns))
             conn.cursor().execute(sql_generator.GenerateDDL())
             print(f'{params["env_schema"]}.{params["tgt_table"]} was refreshed!')
-        load.SfWrite_PandaDF(conn,params,df3)
-
+        load.SfWrite_PandaDF(conn,params,df)
+        
+        #  b) ADI table
+        params["env_schema"] = config_data["sdoh_keys"]["sf_env_schema"]
+        params["tgt_table"] = "ADI_BG"
+        df =  df3[['FIPS','ADI_NATRANK','ADI_STATERANK']].rename(columns = {'FIPS':'FIPS_BG'}).drop_duplicates()
+        if idx == 0:
+            sql_generator = extract.SqlGenerator_HeaderURL(params["env_schema"],params["tgt_table"],list(df.columns))
+            conn.cursor().execute(sql_generator.GenerateDDL())
+            print(f'{params["env_schema"]}.{params["tgt_table"]} was refreshed!')
+        load.SfWrite_PandaDF(conn,params,df)
+       
         # remove temp download folder after writing all csv files to snowflake
         try:
             shutil.rmtree(download_dir)

@@ -1,33 +1,34 @@
 {
     "snowflake_cms_admin_default":{
-        "env_role":"",
-        "env_db":"",
-        "env_wh":"",
-        "env_schema":"",
+        "env_role":"XXX",
+        "env_db":"XXX",
+        "env_wh":"XXX",
+        "env_schema":"XXX",
         "tgt_table":""
     },
     "aws_grouse_default":{
-        "region": "",
-        "user_secret": "",
-        "pwd_secret": "",
-        "acct_secret": ""
+        "region": "XXX",
+        "user_secret": "XXX",
+        "pwd_secret": "XXX",
+        "acct_secret": "XXX"
     },
     "cms_keys":{
-        "s3_bucket_source": "",
-        "s3_bucket_target": "",
+        "s3_bucket_source": "XXX",
+        "s3_bucket_target": "XXX",
         "s3_bucket_key": "CMS/",
         "cms_file_keys": [
-            "RXXX",
-            "RXXXX"
+            "XXX",
+            "XXXX"
         ],
-        "sf_stg_schema":"",
-        "sf_stg_stage":"",
-        "sf_stg_table":"",
-        "sf_env_schema":"CMS_PCORNET_CDM_BACKUP",
-        "sf_env_wh":""
+        "sf_med_wh":"XXX",
+        "sf_stg_schema":"XXX",
+        "sf_stg_stage":"XXX",
+        "sf_stg_table":"XXX",
+        "sf_c2p_schema":"XXX",
+        "sf_ref_schema":"CONCEPT_MAPPING"
     },
     "cms_finder_file_keys":{
-        "s3_bucket_source": "",
+        "s3_bucket_source": "XXX",
         "sf_env_schema":"PATID_MAPPING"
     },
     "nppes_keys":{
@@ -92,8 +93,8 @@
         "phecodex_icd_cm_url":"https://phewascatalog.org/files/phecodeX/phecodeX_ICD_map.csv.zip"
     },
     "sdoh_keys":{
-        "s3_bucket_source":"nextgenbmi-upload-sdoh",
-        "sf_env_schema":"PUBLIC_DATA_STAGING",
+        "s3_bucket_source":"XXX",
+        "sf_env_schema":"XXX",
         "ruca_url":"https://www.ers.usda.gov/webdocs/DataFiles/53241/ruca2010revised.xlsx?v=1405.9",
         "acs_vs_url":"https://raw.githubusercontent.com/UNMC-CRANE/SDH/main/SDH_Stats.csv",
         "acs_col_url":"https://raw.githubusercontent.com/gpcnetwork/UNMC-SDH/main/SDH_Columns.csv"

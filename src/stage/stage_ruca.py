@@ -19,9 +19,9 @@ config_data = json.load(open(file=f'{dir_path}/config.json',encoding = "utf-8"))
 
 # load and clean
 df = pd.read_excel(config_data["sdoh_keys"]["ruca_url"],sheet_name = "Data",header = 0,skiprows = 1)
-df.columns = ['FIPS_STCNTY','STATE','CNTY','FIPS_CT','RUCA_PRIMARY','RUCA_SECONDARY','POP_CT','AREA_CT','POPDENS_CT']
-df['FIPS_STCNTY'] = df.FIPS_STCNTY.astype(str).str.pad(5,fillchar='0')
-df['FIPS_CT'] = df.FIPS_CT.astype(str).str.pad(11,fillchar='0')
+df.columns = ['FIPS','STATE','CNTY','FIPS_TR','RUCA_PRIMARY','RUCA_SECONDARY','POP_TR','AREA_TR','POPDENS_TR']
+df['FIPS'] = df.FIPS.astype(str).str.pad(5,fillchar='0')
+df['FIPS_TR'] = df.FIPS_TR.astype(str).str.pad(11,fillchar='0')
 
 # write useful csv files from temp folder to snowflake
 sf_params_on_aws = config_data["aws_grouse_default"]
