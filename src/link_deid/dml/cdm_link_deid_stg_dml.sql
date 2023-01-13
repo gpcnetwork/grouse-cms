@@ -8,6 +8,9 @@
 
 --truncate bene_mapping.bene_xwalk_cms;
 call link_deid_stg('CMS',1,'UNIQUE_BENE_XWALK_2022','UNIQUE_ID',NULL::string);
+--truncate table geoid_mapping.addressid_xwalk_cms;
+--truncate table geoid_mapping.geocodeid_xwalk_cms;
+call deid_geo_stg('CMS');
 
 --truncate patid_mapping.patid_xwalk_mu;
 call link_deid_stg('MU',1,NULL::string,NULL::string,NULL::string);

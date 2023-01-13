@@ -3,6 +3,7 @@
 # Author: Xing Song, xsm7f@umsystem.edu                            
 # File: cdm_link_deid_ddl.sql                                                 
 # Description: Create table shells for multi-id mapping
+# Note: May need to run this under a non-mapping schema
 */
 
 /*create master BENE_XWALK, can cumulate over time*/
@@ -14,7 +15,17 @@ create or replace table BENE_MAPPING.BENE_XWALK_CMS (
     HASHID VARCHAR(100),
     SITEID VARCHAR(20),
     SHIFT NUMBER(4,0),
-    SEED NUMBER(3,0)
+    SEED NUMBER(3,0) -- for reproducing random date shifts
+);
+
+create or replace table GEOID_MAPPING.ADDRESSID_XWALK_CMS (
+    ADDRESSID VARCHAR(100) NOT NULL,
+    ADDRESSID_HASH VARCHAR(100) NOT NULL
+);
+
+create or replace table GEOID_MAPPING.GEOCODEID_XWALK_CMS (
+    GEOCODEID VARCHAR(100) NOT NULL,
+    GEOCODEID_HASH VARCHAR(100) NOT NULL
 );
 
 /*create site PATID_XWALK_<SITE>*/

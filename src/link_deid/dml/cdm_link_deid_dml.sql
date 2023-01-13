@@ -6,6 +6,8 @@
 safe harbor rule: 
 1. random date shifting but consistent at individual level
 2. mask birth_date of age > 89 to 1900-01-01
+3. All geographic subdivisions smaller than a state, including street address, city, county, precinct, ZIP code, and their equivalent geocodes 
+4. ADDRESSID and GEOCODEID are both hashed
 
 linkage process: 
 1. add DOB to bene_mapping table and create DOB_DEID with birth_date masking
@@ -17,22 +19,23 @@ linkage process:
 */
 
 -- generate lds and de-id tables for cms cdm data
-call link_deid('CMS');
+call link_deid('CMS', null::string);
+-- call link_deid('CMS', 'PRIVATE_ADDRESS_HISTORY'); -- single table update
 
 -- generate lds and de-id tables for site cdm
-call link_deid('MU');
-call link_deid('ALLINA');
-call link_deid('IHC');
-call link_deid('KUMC');
-call link_deid('MCRI');
-call link_deid('MCW');
-call link_deid('UIOWA');
-call link_deid('UNMC');
-call link_deid('UTHOUSTON');
-call link_deid('UTHSCSA');
-call link_deid('UTSW');
-call link_deid('UU');
-call link_deid('WASHU');
+call link_deid('MU', null::string);
+call link_deid('ALLINA', null::string);
+call link_deid('IHC', null::string);
+call link_deid('KUMC', null::string);
+call link_deid('MCRI', null::string);
+call link_deid('MCW', null::string);
+call link_deid('UIOWA', null::string);
+call link_deid('UNMC', null::string);
+call link_deid('UTHOUSTON', null::string);
+call link_deid('UTHSCSA', null::string);
+call link_deid('UTSW', null::string);
+call link_deid('UU', null::string);
+call link_deid('WASHU', null::string);
 
 -- generate secure share views for de-id tables
 call gen_deid_view('CMS');

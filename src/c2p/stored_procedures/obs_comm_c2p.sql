@@ -6,40 +6,43 @@
 #               public datasets into OBS_COMM table
 */
 
-create or replace procedure transform_to_obs_comm(SRC_TABLE STRING, GEOID_TYPE STRING)
+create or replace procedure transform_to_obs_comm(
+    SRC_TABLE STRING, GEO_ACCURACY STRING)
 returns variant
 language javascript
 as
 $$
 /*
 @param{string} SRC_TABLE: the string suggesting source SDOH data table under the common "PUBLIC_DATA_STAGING" schema
-@param{string} GEOID_TYPE: one of ('CBG','CT','CNTY','ZIP5') suggesting geographical level of which the obs_comm observation is measured
+@param{string} GEO_ACCURACY: one of ('BG','TR','CN','Z5','ST') suggesting geographical level of which the obs_comm observation is measured
 */
-
-// full-load or cdc-based load
-var subset_clause = (SRC_TABLE === undefined) ? '': `WHERE a.src_table = '` + SRC_TABLE + `'`;
+// one source at a time
+var subset_clause = `WHERE a.src_table = '` + SRC_TABLE + `'`;
 
 // matching criteria
-let matching_clause = `a.geoid_type = '`+ GEOID_TYPE +`'`;
-switch(GEOID_TYPE){
-    case 'CT':
-        subset_clause += ` AND substr(a.geoid,1,11) = substr(b.addressid,1,11)`;
+let matching_clause = `a.obscomm_geo_accuracy = '`+ GEO_ACCURACY +`'`;
+switch(GEO_ACCURACY){
+    case 'BG':
+        subset_clause += ` AND a.geocodeid = b.geocode_group`;
         break;
-    case 'CBG':
-        subset_clause += ` AND a.geoid = substr(b.addressid,1,12)`;
+    case 'TR':
+        subset_clause += ` AND a.geocodeid = b.geocode_tract`;
         break;
-    case 'CNTY':
-        subset_clause += ` AND substr(a.geoid,1,5) = substr(b.addressid,1,5)`;
+    case 'CN':
+        subset_clause += ` AND a.geocodeid = b.geocode_county`;
         break;
-    case 'ZIP5':
-        subset_clause += ` AND a.geoid = substr(b.addressid,14,5)`;
+    case 'ST':
+        subset_clause += ` AND a.geocodeid = b.geocode_state`;
+        break;
+    case 'Z5':
+        subset_clause += ` AND a.geocodeid = substr(b.geocode_zip,1,5)`;
         break;
 }
 // generate dynamic dml query
 var t_qry = `INSERT INTO obs_comm
                SELECT DISTINCT 
-                      a.geoid
-                     ,a.geoid_type
+                      a.geocodeid
+                     ,a.obscomm_geo_accuracy
                      ,a.obscomm_code
                      ,a.obscomm_type
                      ,a.obscomm_type_qual
@@ -47,11 +50,12 @@ var t_qry = `INSERT INTO obs_comm
                      ,a.obscomm_result_num
                      ,a.obscomm_result_modifier
                      ,a.obscomm_result_unit
+                     ,a.raw_obscomm_name
                      ,a.raw_obscomm_result
-                     ,a.src_date_start
-                     ,a.src_date_end
+                    --  ,a.src_date_start
+                    --  ,a.src_date_end
                FROM CMS_PCORNET_CDM_STAGING.private_obs_comm_stage a
-               JOIN lds_address_history b
+               JOIN private_address_geocode b
                ON `+ matching_clause +` `+ subset_clause +`;`;
 /**
 // preview of the generated dynamic SQL scripts - comment it out when perform actual execution
@@ -68,4 +72,3 @@ run_transform.execute();
 commit_txn.execute();
 $$
 ;
-

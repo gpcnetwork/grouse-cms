@@ -11,6 +11,7 @@ returns variant
 language javascript
 as
 $$
+// RUCA
 if(SRC_TABLE.includes('RUCA')){
     // generate dynamic dml query
     var stg_qry = `INSERT INTO private_obs_comm_stage
@@ -26,7 +27,7 @@ if(SRC_TABLE.includes('RUCA')){
                        FROM `+ SRC_SCHEMA +`.`+ SRC_TABLE +`
                    )
                    SELECT fips_ct
-                         ,'CT'
+                         ,'TR' -- follow GEO_ACCURACY valueset
                          ,'RUCA|'||ruca_type
                          ,'UD'
                          ,NULL
@@ -34,13 +35,44 @@ if(SRC_TABLE.includes('RUCA')){
                          ,NULL
                          ,'EQ'
                          ,'score'
+                         ,null
                          ,ruca_val
                          ,'`+ SRC_SCHEMA +`'
                          ,'`+ SRC_TABLE +`'
                          ,to_date('2010-01-01')
                          ,current_date
                    FROM ruca_cte;`;
-                   
+// ADI                    
+}else if(SRC_TABLE.includes('ADI')){
+    var stg_qry = `INSERT INTO private_obs_comm_stage
+                   WITH adi_cte AS (
+                       SELECT fips_cbg
+                             ,'NATRANK' AS adi_type
+                             ,ADI_NATRANK AS adi_val
+                       FROM `+ SRC_SCHEMA +`.`+ SRC_TABLE +`
+                       UNION
+                       SELECT fips_cbg
+                             ,'STATERANK'
+                             ,ADI_STATERANK
+                       FROM `+ SRC_SCHEMA +`.`+ SRC_TABLE +`
+                   )
+                   SELECT fips_cbg
+                         ,'BG' -- follow GEO_ACCURACY valueset
+                         ,'ADI|'||adi_type
+                         ,'UD'
+                         ,NULL
+                         ,adi_val
+                         ,NULL
+                         ,'EQ'
+                         ,'rank'
+                         ,null
+                         ,adi_val
+                         ,'`+ SRC_SCHEMA +`'
+                         ,'`+ SRC_TABLE +`'
+                         ,to_date('2020-01-01')
+                         ,current_date
+                   FROM adi_cte;`;
+// ACS                 
 }else if(SRC_TABLE.includes('ACS')){
 var collate_col_stmt = snowflake.createStatement({
     sqlText: `SELECT table_name, listagg(column_name,',') within group (ORDER BY column_name) as cols  
@@ -56,7 +88,7 @@ var table = global_cols.getColumnValue(1);
 var cols = global_cols.getColumnValue(2); 
 var stg_qry = `INSERT INTO private_obs_comm_stage
                SELECT a.fips_ct
-                     ,'CT'
+                     ,'TR' -- follow GEO_ACCURACY valueset
                      ,b.snomed
                      ,'SM'
                      ,NULL
@@ -64,6 +96,7 @@ var stg_qry = `INSERT INTO private_obs_comm_stage
                      ,a.val
                      ,'EQ'
                      ,b.unit
+                     ,b.description
                      ,a.val
                      ,'`+ SRC_SCHEMA +`'
                      ,'`+ SRC_TABLE +`'
@@ -91,6 +124,5 @@ commit_txn.execute();
 
 $$
 ;
-
 
 

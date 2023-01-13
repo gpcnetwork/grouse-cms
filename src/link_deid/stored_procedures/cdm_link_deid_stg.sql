@@ -120,3 +120,49 @@ run_stg_qry.execute();
 commit_txn.execute();
 $$
 ;
+
+
+create or replace procedure deid_geo_stg(SITE STRING)
+returns variant
+language javascript
+as
+$$
+/**
+ * @param {string} SITE: the string of site acronyms (matching schema name suffix)
+**/
+
+var cdm_schema = SITE.includes('CMS') ? 'CMS_PCORNET_CDM' : 'PCORNET_CDM_' + SITE;  
+
+stg_qry1 = `MERGE INTO geoid_mapping.addressid_xwalk_`+ SITE +` t
+                USING(
+                    SELECT DISTINCT 
+                           ADDRESSID,
+                           md5(ADDRESSID) AS ADDRESSID_HASH
+                    FROM `+ cdm_schema +`.PRIVATE_ADDRESS_GEOCODE
+                ) s
+                ON s.addressid = t.addressid
+                WHEN NOT MATCHED
+                    THEN INSERT(addressid, addressid_hash)
+                            VALUES(s.addressid, s.addressid_hash)
+           ;`;
+           
+ stg_qry2 = `MERGE INTO geoid_mapping.geocodeid_xwalk_`+ SITE +` t
+                USING(
+                    SELECT DISTINCT 
+                           GEOCODEID,
+                           md5(GEOCODEID) AS GEOCODEID_HASH
+                    FROM `+ cdm_schema +`.PRIVATE_ADDRESS_GEOCODE
+                ) s
+                ON s.geocodeid = t.geocodeid 
+                WHEN NOT MATCHED
+                    THEN INSERT(geocodeid, geocodeid_hash)
+                            VALUES(s.geocodeid, s.geocodeid_hash)
+           ;`;
+
+// run dynamic dml query
+var commit_txn = snowflake.createStatement({sqlText: `commit;`});
+var run_stg1_dml = snowflake.createStatement({sqlText:stg_qry1}); run_stg1_dml.execute();
+var run_stg2_dml = snowflake.createStatement({sqlText:stg_qry2}); run_stg2_dml.execute();
+commit_txn.execute(); 
+$$
+;
