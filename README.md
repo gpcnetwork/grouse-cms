@@ -122,8 +122,10 @@ The Area Deprivation Index (ADI) is based on a measure created by the Health Res
 The rural-urban commuting area (RUCA) codes classify U.S. census tracts using **measures of population density, urbanization, and daily commuting**. We have loaded the 2010 RUCA (most recent release) from https://www.ers.usda.gov/data-products/rural-urban-commuting-area-codes/ and made it likable to other datasets. 
 
 ***************************************************************************************************
+
 # Request Access to GROUSE
 If you've defined clear study objectives and found GROUSE to be a fitting data resource for your research, please follow the access request process described in the following wiki page: 
+
 > [GROUSE Access Request Process](https://github.com/gpcnetwork/grouse-cms/wiki/Access-Request-Process)
 
 
