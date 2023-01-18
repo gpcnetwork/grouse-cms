@@ -21,6 +21,9 @@ linkage process:
 -- generate lds and de-id tables for cms cdm data
 call link_deid('CMS', null::string);
 -- call link_deid('CMS', 'PRIVATE_ADDRESS_HISTORY'); -- single table update
+-- call link_deid('CMS','PRIVATE_ADDRESS_GEOCODE'); -- single table update
+-- call link_deid('CMS','OBS_COMM'); -- single table update
+-- call link_deid('CMS','ENROLLMENT'); -- single table update
 
 -- generate lds and de-id tables for site cdm
 call link_deid('MU', null::string);
