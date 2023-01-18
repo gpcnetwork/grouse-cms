@@ -90,6 +90,7 @@ with snowflake_conn as conn:
             conn.cursor().execute(sql_generator.GenerateDDL())
             print(f'{params["env_schema"]}.{params["tgt_table"]} was refreshed!')
         load.SfWrite_PandaDF(conn,params,df)
+        # need to add similar columns as produced by DeGAUSS software
         
         #  b) ADI table
         params["env_schema"] = config_data["sdoh_keys"]["sf_env_schema"]

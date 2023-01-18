@@ -59,9 +59,9 @@ var tables = collect_tbl.execute();
 while (tables.next()){   
     // get table name, complete column names for different de-id scenario
     var tbl = tables.getColumnValue(1);
-    var cols = tables.getColumnValue(2).split(",").filter(value =>{return !value.includes('RAW_') || value.includes('RAW_RX_MED_NAME') || value.includes('RAW_BASIS')});
-    var cols_no_addr = cols.filter(value =>{return !value.includes('DETAIL') && !value.includes('STREET') && !value.includes('LONGITUDE')  && !value.includes('LATITUDE') && !value.includes('GEOCODE_CUSTOM')});
-    var cols_no_addrzip = cols_no_addr.filter(value =>{return !value.includes('ZIP') && !value.includes('COUNTY') && !value.includes('CITY') && (!value.includes('GEOCODE_') || value.includes('GEOCODE_STATE'))});
+    var cols = tables.getColumnValue(2).split(",").filter(value =>{return !value.includes('RAW_') || value.includes('RAW_RX_MED_NAME') || value.includes('RAW_BASIS') || value.includes('RAW_OBSCOMM_NAME')});
+    var cols_no_addr = cols.filter(value =>{return !value.includes('DETAIL') && !value.includes('STREET') && !value.includes('LONGITUDE')  && !value.includes('LATITUDE') && !value.includes('GEOCODE_CUSTOM') && !value.includes('GEOCODE_BLOCK')});
+    var cols_no_addr_deid = cols_no_addr.filter(value =>{return !value.includes('ZIP') && !value.includes('CITY') && !value.includes('COUNTY')});
     
     // separate out id and dob columns 
     var cols_no_id = cols.filter(value =>{return !value.includes('PATID') && !value.includes('ADDRESSID') && !value.includes('GEOCODEID')});
@@ -110,24 +110,36 @@ while (tables.next()){
         // need to deidentify addressid, geocodeid
         }else if(tbl.includes('ADDRESS_GEOCODE')){
             var lds_t_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ lds_tbl +` AS
-                                    WITH id_map_cte AS (
-                                        SELECT DISTINCT 
-                                               axw.addressid_hash AS addressid,gxw.geocodeid_hash AS geocodeid,
-                                               `+ cols_no_id_alias +`
-                                        FROM `+ cdm_schema +`.`+ tbl +` a
-                                        JOIN geoid_mapping.addressid_xwalk_`+ SITE +` axw ON a.addressid = axw.addressid 
-                                        JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw ON a.geocodeid = gxw.geocodeid
-                                    )
-                                    SELECT `+ cols_no_addr +` FROM id_map_cte;`;
+                                SELECT DISTINCT 
+                                       gxw.geoid_hash as geocodeid,
+                                       axw.addressid_hash as addressid,
+                                       a.geocode_state,
+                                       a.geocode_county,
+                                       a.geocode_tract,
+                                       gxw2.geoid_hash AS geocode_group,
+                                       gxw3.geoid_hash AS geocode_zip9,
+                                       a.geocode_zip5,
+                                       a.geocode_zcta, 
+                                       a.shapefile AS shapefile,
+                                       'Z9' as geo_accuracy,
+                                       a.geo_prov_ref, 
+                                       a.assignment_date 
+                                FROM `+ cdm_schema +`.`+ tbl +` a
+                                JOIN geoid_mapping.addressid_xwalk_`+ SITE +` axw ON a.addressid = axw.addressid
+                                JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw ON a.geocodeid = gxw.geoid AND gxw.geoid_type = 'GEOCODEID'
+                                JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw2 ON a.geocode_group = gxw2.geoid AND gxw2.geoid_type = 'GEOCODE_GROUP'
+                                JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw3 ON a.geocode_zip9 = gxw3.geoid AND gxw3.geoid_type = 'GEOCODE_ZIP9'
+                                ;`;
                                     
         // need to deidentify geocodeid
         }else if(tbl.includes('OBS_COMM')){
             var lds_t_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ lds_tbl +` AS
                                     WITH id_map_cte AS (
                                         SELECT DISTINCT 
-                                               xw.geocodeid_hash AS geocodeid,`+ cols_no_id_alias +`
+                                               xw.geoid_hash AS obscomm_geocodeid,`+ cols_no_id_alias +`
                                         FROM `+ cdm_schema +`.`+ tbl +` a
-                                        JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` xw ON a.geocodeid = xw.geocodeid
+                                        JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` xw 
+                                        ON a.obscomm_geocodeid = xw.geoid AND a.obscomm_geo_accuracy = xw.geo_accuracy
                                     )
                                     SELECT `+ cols_no_addr +` FROM id_map_cte;`;
         
@@ -175,14 +187,40 @@ while (tables.next()){
                                     JOIN `+ xw_ref +`_mapping.`+ xw_ref +`_xwalk_`+ SITE +` xw ON a.patid = xw.`+ id_col +`
                                     JOIN geoid_mapping.addressid_xwalk_`+ SITE +` axw ON a.addressid = axw.addressid
                                 )
-                                SELECT `+ cols_no_addrzip +` FROM deid_cte;`;
+                                SELECT `+ cols_no_addr_deid +` FROM deid_cte;`;
                                 
-        // need to deidentify addressid and/or gocodeid, but no dates need to be shifted (similar to LDS with more location-sensitive columns removed)
-        }else if(tbl.includes('ADDRESS_GEOCODE') || tbl.includes('OBS_COMM')){
+        // need to hash more geoid columns, but no dates need to be shifted
+        }else if(tbl.includes('ADDRESS_GEOCODE')){
             var deid_t_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ deid_tbl +` AS
-                                    SELECT `+ cols_no_addrzip +` 
+                                    SELECT DISTINCT 
+                                       gxw.geoid_hash as geocodeid,
+                                       axw.addressid_hash as addressid,
+                                       a.geocode_state,
+                                       gxw6.geoid_hash AS geocode_county,
+                                       gxw4.geoid_hash AS geocode_tract,
+                                       gxw2.geoid_hash AS geocode_group,
+                                       gxw3.geoid_hash AS geocode_zip9,
+                                       gxw5.geoid_hash AS geocode_zip5,
+                                       a.geocode_zcta, 
+                                       a.shapefile AS shapefile,
+                                       'Z9' as geo_accuracy,
+                                       a.geo_prov_ref, 
+                                       a.assignment_date 
+                                FROM `+ cdm_schema +`.`+ tbl +` a
+                                JOIN geoid_mapping.addressid_xwalk_`+ SITE +` axw ON a.addressid = axw.addressid
+                                JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw ON a.geocodeid = gxw.geoid AND gxw.geoid_type = 'GEOCODEID'
+                                JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw2 ON a.geocode_group = gxw2.geoid AND gxw2.geoid_type = 'GEOCODE_GROUP'
+                                JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw3 ON a.geocode_zip9 = gxw3.geoid AND gxw3.geoid_type = 'GEOCODE_ZIP9'
+                                JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw4 ON a.geocode_tract = gxw4.geoid AND gxw4.geoid_type = 'GEOCODE_TRACT'
+                                JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw5 ON a.geocode_zip5 = gxw5.geoid AND gxw5.geoid_type = 'GEOCODE_ZIP5'
+                                JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw6 ON a.geocode_county = gxw6.geoid AND gxw6.geoid_type = 'GEOCODE_COUNTY'
+                                ;`;
+       // similar to LDS with more location-sensitive columns removed 
+       }else if (tbl.includes('OBS_COMM')){
+            var deid_t_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ deid_tbl +` AS
+                                    SELECT `+ cols_no_addr_deid +` 
                                     FROM `+ cdm_schema +`.`+ lds_tbl +`;`;
-                                    
+   
        // need to deidentify patid and all real dates                      
         }else{
             var deid_t_qry =`CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ deid_tbl +` AS
@@ -198,76 +236,6 @@ while (tables.next()){
     }
     var run_deid_t_qry = snowflake.createStatement({sqlText: deid_t_qry});
     run_deid_t_qry.execute();
-    commit_txn.execute();
-}
-$$
-;
-
-create or replace procedure gen_deid_view(SITE STRING)
-returns variant
-language javascript
-as
-$$
-/**
- * Stored procedure to generate de-id views
- * @param {string} SITE: the string of site acronyms (matching schema name suffix)
-**/ 
-// check if target deid table exists
-var cdm_schema = SITE.includes('CMS') ? 'CMS_PCORNET_CDM' : 'PCORNET_CDM_' + SITE;
-var chk_tbl = `SELECT DISTINCT table_name
-               FROM information_schema.tables 
-               WHERE table_schema = '`+ cdm_schema +`' 
-                 AND table_name like 'DEID%'`;
-var run_chk_tbl = snowflake.createStatement({sqlText: chk_tbl});
-var get_tbl_result = run_chk_tbl.execute(); 
-
-// loop over tables
-while(get_tbl_result.next()){ 
-    // create view name
-    var deid_tbl = get_tbl_result.getColumnValue(1); 
-    var deid_view = `V_` + deid_tbl;
-    
-    // view genertion query
-    var commit_txn = snowflake.createStatement({sqlText: `commit;`});
-    var deid_v_qry =`CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.`+ deid_view +` AS
-                     SELECT * FROM `+ deid_tbl +`;`;
-    var run_deid_v_qry = snowflake.createStatement({sqlText: deid_v_qry});
-    run_deid_v_qry.execute();
-    commit_txn.execute();
-}
-$$
-;
-
-create or replace procedure gen_deid_view(SITE STRING)
-returns variant
-language javascript
-as
-$$
-/**
- * Stored procedure to generate de-id views
- * @param {string} SITE: the string of site acronyms (matching schema name suffix)
-**/ 
-// check if target deid table exists
-var cdm_schema = SITE.includes('CMS') ? 'CMS_PCORNET_CDM' : 'PCORNET_CDM_' + SITE;
-var chk_tbl = `SELECT DISTINCT table_name
-               FROM information_schema.tables 
-               WHERE table_schema = '`+ cdm_schema +`' 
-                 AND table_name like 'DEID%'`;
-var run_chk_tbl = snowflake.createStatement({sqlText: chk_tbl});
-var get_tbl_result = run_chk_tbl.execute(); 
-
-// loop over tables
-while(get_tbl_result.next()){ 
-    // create view name
-    var deid_tbl = get_tbl_result.getColumnValue(1); 
-    var deid_view = `V_` + deid_tbl;
-    
-    // view genertion query
-    var commit_txn = snowflake.createStatement({sqlText: `commit;`});
-    var deid_v_qry =`CREATE OR REPLACE SECURE VIEW `+ cdm_schema +`.`+ deid_view +` AS
-                     SELECT * FROM `+ deid_tbl +`;`;
-    var run_deid_v_qry = snowflake.createStatement({sqlText: deid_v_qry});
-    run_deid_v_qry.execute();
     commit_txn.execute();
 }
 $$

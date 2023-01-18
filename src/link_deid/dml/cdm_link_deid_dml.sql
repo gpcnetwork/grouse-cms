@@ -6,8 +6,9 @@
 safe harbor rule: 
 1. random date shifting but consistent at individual level
 2. mask birth_date of age > 89 to 1900-01-01
-3. All geographic subdivisions smaller than a state, including street address, city, county, precinct, ZIP code, and their equivalent geocodes 
-4. ADDRESSID and GEOCODEID are both hashed
+3. All geographic subdivisions smaller than a state, including street address, city, county, 
+   precinct, ZIP code, and their equivalent geocodes (e.g., census tract, census block) should 
+   either be removed or hashed
 
 linkage process: 
 1. add DOB to bene_mapping table and create DOB_DEID with birth_date masking

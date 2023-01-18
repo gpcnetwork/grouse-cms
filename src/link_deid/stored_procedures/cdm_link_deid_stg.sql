@@ -148,15 +148,39 @@ stg_qry1 = `MERGE INTO geoid_mapping.addressid_xwalk_`+ SITE +` t
            
  stg_qry2 = `MERGE INTO geoid_mapping.geocodeid_xwalk_`+ SITE +` t
                 USING(
-                    SELECT DISTINCT 
-                           GEOCODEID,
-                           md5(GEOCODEID) AS GEOCODEID_HASH
-                    FROM `+ cdm_schema +`.PRIVATE_ADDRESS_GEOCODE
+                    SELECT GEOID,
+                           md5(GEOID) AS GEOID_HASH,
+                           GEOID_TYPE,
+                           CASE WHEN GEOID_TYPE = 'GEOCODE_BLOCK' THEN 'BL'
+                                WHEN GEOID_TYPE = 'GEOCODE_GROUP' THEN 'BG'
+                                WHEN GEOID_TYPE = 'GEOCODE_TRACT' THEN 'TR'
+                                WHEN GEOID_TYPE = 'GEOCODE_ZIP9' THEN 'Z9'
+                                WHEN GEOID_TYPE = 'GEOCODE_ZIP5' THEN 'Z5'
+                                WHEN GEOID_TYPE = 'GEOCODE_COUNTY' THEN 'CN' 
+                                ELSE 'GEOCODEID'
+                           END AS GEO_ACCURACY
+                     FROM(
+                        SELECT DISTINCT
+                               GEOCODEID,
+                               GEOCODE_BLOCK,
+                               GEOCODE_GROUP,
+                               GEOCODE_TRACT,
+                               GEOCODE_ZIP9,
+                               GEOCODE_ZIP5,
+                               GEOCODE_COUNTY
+                        FROM `+ cdm_schema +`.PRIVATE_ADDRESS_GEOCODE
+                        )
+                        UNPIVOT (
+                            GEOID for GEOID_TYPE in (
+                                GEOCODEID,GEOCODE_BLOCK,GEOCODE_GROUP,GEOCODE_TRACT,
+                                GEOCODE_ZIP9,GEOCODE_ZIP5,GEOCODE_COUNTY
+                            ))
+                        WHERE GEOID is not null
                 ) s
-                ON s.geocodeid = t.geocodeid 
+                ON s.geoid = t.geoid AND s.geoid_type = t.geoid_type
                 WHEN NOT MATCHED
-                    THEN INSERT(geocodeid, geocodeid_hash)
-                            VALUES(s.geocodeid, s.geocodeid_hash)
+                    THEN INSERT(geoid, geoid_hash, geoid_type, geo_accuracy)
+                            VALUES(s.geoid, s.geoid_hash, s.geoid_type, s.geo_accuracy)
            ;`;
 
 // run dynamic dml query
