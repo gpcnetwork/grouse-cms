@@ -22,6 +22,7 @@ create or replace table PRIVATE_DISPENSING (
     ,DISPENSE_ROUTE  varchar(50) NULL
     ,DISPENSE_SOURCE varchar(2)
 	,RAW_NDC varchar (50) NULL
+	,RAW_RX_MED_NAME varchar(500)
 	,RAW_DISPENSE_DOSE_DISP  varchar(50) NULL
     ,RAW_DISPENSE_DOSE_DISP_UNIT varchar(50) NULL
     ,RAW_DISPENSE_ROUTE varchar(50) NULL

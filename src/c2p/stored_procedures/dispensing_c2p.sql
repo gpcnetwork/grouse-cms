@@ -44,6 +44,7 @@ var t_qry = `INSERT INTO private_dispensing
                       ,gcdf AS dispense_route
                       ,'CL' AS dispense_source
                       ,prdsrvid AS raw_ndc
+                      ,gnn AS raw_rx_med_name
                       ,str AS raw_dispense_dose_disp
                       ,str AS raw_dispense_dose_disp_unit
                       ,gcdf_desc AS raw_dispense_route

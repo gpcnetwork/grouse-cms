@@ -12,4 +12,3 @@ call stage_procedures('MEDICARE_2014',NULL::string);
 call stage_procedures('MEDICARE_2015',NULL::string);
 call stage_procedures('MEDICARE_2016',NULL::string);
 call stage_procedures('MEDICARE_2017',NULL::string);
-

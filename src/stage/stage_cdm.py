@@ -1,7 +1,7 @@
 #####################################################################     
 # Copyright (c) 2021-2022 University of Missouri                   
 # Author: Xing Song, xsm7f@umsystem.edu                            
-# File: main_cdm.py                                                 
+# File: stage_cdm.py                                                 
 # The file read Snowflake credential from secret manager and establish
 # database connection using python connector; and send DML script 
 # over to snowflake to perform data staging steps                                              
@@ -57,20 +57,20 @@ gpc_list = [
             ]
     
 tbl_incld = [ 
-            #   'harvest'
-            #  ,'condition'
+              'harvest'
+             ,'condition'
             #  ,'death_cause'
-              'death'
+            #  ,'death'
             #  ,'demographic'
-            #  ,'diagnosis'
+             ,'diagnosis'
             #  ,'dispensing'
             #  ,'encounter'
             #  ,'enrollment'
             #  ,'immunization'
             #  ,'lab_history'
-            #   'lab_result_cm'
+            #  ,'lab_result_cm'
             #  ,'med_admin'
-            #   'obs_clin'
+            #  ,'obs_clin'
             #  ,'obs_gen'
             #  ,'pcornet_trial'
             #  ,'prescribing'
@@ -128,8 +128,9 @@ with snowflake_conn as conn:
                 # identify target table name
                 src_file_name = val.split('.')[0]
                 src_file_type = val.split('.')[1]
-                # file name may contain prefix and suffix
-                if not any(ele in src_file_name for ele in tbl_incld):
+                # file name may contain prefix and/or suffix
+                # exception: death and death_cause are two different tables
+                if not any(ele in src_file_name and f'{ele}_cause' not in src_file_name for ele in tbl_incld):
                     continue
                 params["tgt_table"] = [x for x in tbl_incld if x in src_file_name][0].upper()
                 tgt_table_full = params["tgt_table"]
@@ -146,8 +147,8 @@ with snowflake_conn as conn:
                 # download file in full - once per file
                 if not skip_download:
                     load.Download_S3Objects(src_bucket,
-                                           f'{src_file_name}.{src_file_type}',
-                                           f'{src_file_name}.{src_file_type}')
+                                            f'extract/{src_file_name}.{src_file_type}',
+                                            f'{src_file_name}.{src_file_type}')
                 
                 # write .sas7bdat to table
                 if load_by_chunk:
@@ -161,11 +162,11 @@ with snowflake_conn as conn:
                         next_row, sasdf, sasmeta = load.Read_SAS7bDAT(src_file_name, 
                                                                       row_offset=skip_row,
                                                                       row_limit=chunk_size,
-                                                                      encoding = 'utf-8') #default is usually "utf-8". Alternatives: "latin1","iso-8859-1"
+                                                                      encoding = 'iso-8859-1') #default is usually "utf-8". Alternatives: "latin1","iso-8859-1"
                         #---simple benchmark---midpoint---
                         mid = utils.get_benchmark()
                         #----------------------------------
-                        
+
                         # adjust metadata to accommodate for site differences
                         meta_adj = utils.amend_metadata(cdm_meta[tgt_table_full],sasmeta) 
                             

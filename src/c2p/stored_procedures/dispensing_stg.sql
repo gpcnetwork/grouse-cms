@@ -47,6 +47,8 @@ var stg_pt_qry = `  INSERT INTO private_dispensing_stage
                           ,pde.prdsrvid
                           ,pde.dayssply
                           ,pde.qtydspns
+                          ,pde.bn
+                          ,pde.gnn
                           ,pde.str
                           ,pde.gcdf -- dosage form
                           ,pde.gcdf_desc

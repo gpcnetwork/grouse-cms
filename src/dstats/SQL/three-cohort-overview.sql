@@ -10,8 +10,7 @@ create or replace table GPC_TABLE1 (
     SITE varchar(10),
     CMS_ENR_IND integer,
     CMS_AB_CONT5YR integer,
-    CMS_D_CONT5YR integer,
-    PATID_IDX integer
+    CMS_D_CONT5YR integer
 );
 
 create or replace table ALS_TABLE1 (
@@ -26,8 +25,7 @@ create or replace table ALS_TABLE1 (
     SITE varchar(10),
     CMS_ENR_IND integer,
     CMS_AB_CONT5YR integer,
-    CMS_D_CONT5YR integer,
-    PATID_IDX integer
+    CMS_D_CONT5YR integer
 );
 
 create or replace table BC_TABLE1 (
@@ -42,27 +40,17 @@ create or replace table BC_TABLE1 (
     SITE varchar(10),
     CMS_ENR_IND integer,
     CMS_AB_CONT5YR integer,
-    CMS_D_CONT5YR integer,
-    PATID_IDX integer
+    CMS_D_CONT5YR integer
 );
 
-create or replace table WT_TABLE1 (
+create or replace table WT_TABLE_LONG (
     PATID varchar(50) NOT NULL,
-    BIRTH_DATE date,
-    INDEX_DATE date,      -- date of first BMI record
-    AGE_AT_INDEX integer,
-    AGEGRP_AT_INDEX varchar(10),
-    OBESE_IND integer,             -- BMI ever >= 30
-    BMI_CNT integer,
-    BMI_DATE_RANGE integer,
-    SEX varchar(3),
-    RACE varchar(6),
-    HISPANIC varchar(20),
+    MEASURE_DATE date,      -- date of first HT/WT/BMI record
+    AGE_AT_MEASURE integer,
+    MEASURE_TYPE varchar(4),
+    MEASURE_NUM double, -- ht:m; wt:kg
     SITE varchar(10),
-    CMS_ENR_IND integer,
-    CMS_AB_CONT5YR integer,
-    CMS_D_CONT5YR integer,
-    PATID_IDX integer
+    SRC_TABLE varchar(10)
 );
 
 /*stored procedure to collect overall GPC cohort*/
@@ -134,7 +122,6 @@ for(i=0; i<SITES.length; i++){
                                ,NVL(enr.CMS_ENR_IND,0)
                                ,NVL(ab.CMS_AB_CONT5YR,0)
                                ,NVL(d.CMS_D_CONT5YR,0)
-                               ,row_number() over (partition by cte.patid order by cte.index_date)
                          FROM cte_enc_age cte
                          LEFT JOIN cte_enr enr on enr.patid = cte.patid
                          LEFT JOIN cte_ab_enr ab on ab.patid = cte.patid
@@ -224,7 +211,6 @@ for(i=0; i<SITES.length; i++){
                                ,cms_enr_ind
                                ,cms_ab_cont5yr
                                ,cms_d_cont5yr
-                               ,row_number() over (partition by cte.patid order by cte.index_date)
                         FROM cte;`;
 
     // run query
@@ -311,7 +297,6 @@ for(i=0; i<SITES.length; i++){
                                ,cms_enr_ind
                                ,cms_ab_cont5yr
                                ,cms_d_cont5yr
-                               ,row_number() over (partition by cte.patid order by cte.index_date)
                         FROM cte;`;
 
     // run query
@@ -340,7 +325,7 @@ call get_bc_table1(array_construct(
 ));
 
 /*stored procedure to identify WeighT cohort*/
-create or replace procedure get_wt_table1(SITES array)
+create or replace procedure get_wt_table_long(SITES array)
 returns variant
 language javascript
 as
@@ -357,56 +342,57 @@ for(i=0; i<SITES.length; i++){
     var site_cdm = 'PCORNET_CDM_' + site;
     
     // dynamic query
-    var sqlstmt_par = `INSERT INTO WT_TABLE1 
-                       WITH cte_bmi_age AS (
-                         SELECT v.PATID,
-                                v.HT,
-                                v.WT,
-                                v.ORIGINAL_BMI,
-                                CASE WHEN HT = 0 THEN ORIGINAL_BMI
-                                     ELSE NVL(v.ORIGINAL_BMI,round(WT/(v.HT*v.HT)*703)) 
-                                     END AS BMI,
-                                d.BIRTH_DATE,
-                                v.MEASURE_DATE::date as INDEX_DATE,
-                                round(datediff(day,d.BIRTH_DATE::date,v.MEASURE_DATE::date)/365.25) AS age_at_index,
-                                count(distinct v.MEASURE_DATE::date) over (partition by d.PATID) AS bmi_cnt,
-                                min(v.MEASURE_DATE::date) over (partition by d.PATID) AS bmi_date_min,
-                                max(v.MEASURE_DATE::date) over (partition by d.PATID) AS bmi_date_max,
-                                d.sex, 
-                                CASE WHEN d.race IN ('05') THEN 'white' 
-                                     WHEN d.race IN ('03') THEN 'black'
-                                     WHEN d.race IN ('NI','UN',NULL) THEN 'NI'
-                                     ELSE 'ot' END AS race, 
-                                CASE WHEN d.hispanic = 'Y' THEN 'hispanic' 
-                                     WHEN d.hispanic = 'N' THEN 'non-hispanic' 
-                                     WHEN d.hispanic IN ('NI','UN',NULL) THEN 'NI'
-                                     ELSE 'ot' END AS hispanic
-                         FROM `+ site_cdm +`.LDS_VITAL v
-                         JOIN `+ site_cdm +`.LDS_DEMOGRAPHIC d ON d.PATID = v.PATID
-                         WHERE NVL(v.HT*v.WT,v.ORIGINAL_BMI) is not null
-                         )
-                         SELECT bmi.patid
-                               ,bmi.birth_date
-                               ,bmi.index_date
-                               ,bmi.age_at_index
-                               ,case when bmi.age_at_index < 19 then 'agegrp1'
-                                     when bmi.age_at_index >= 19 and bmi.age_at_index < 24 then 'agegrp2'
-                                     when bmi.age_at_index >= 25 and bmi.age_at_index < 85 then 'agegrp' || (floor((bmi.age_at_index - 25)/5) + 3)
-                                     else 'agegrp15' end as agegrp_at_index
-                               ,CASE WHEN max(bmi.BMI)>=30 THEN 1 ELSE 0 END AS obese_ind
-                               ,bmi.bmi_cnt
-                               ,datediff(day,bmi.bmi_date_min,bmi.bmi_date_max) AS bmi_date_range
-                               ,bmi.sex
-                               ,bmi.race
-                               ,bmi.hispanic
-                               ,'`+ site +`' AS site,
-                               ,MAX(NVL(gpc.CMS_ENR_IND,0)) AS CMS_ENR_IND
-                               ,MAX(NVL(gpc.CMS_AB_CONT5YR,0)) AS CMS_AB_CONT5YR
-                               ,MAX(NVL(gpc.CMS_D_CONT5YR,0)) AS CMS_D_CONT5YR
-                               ,row_number() over (partition by bmi.patid order by bmi.index_date)
-                         FROM cte_bmi_age bmi 
-                         LEFT JOIN GPC_TABLE1 gpc ON bmi.patid = gpc.patid
-                         GROUP BY bmi.patid, bmi.birth_date, bmi.index_date, bmi.age_at_index, bmi.bmi_cnt, bmi.bmi_date_min, bmi.bmi_date_max, bmi.sex, bmi.race, bmi.hispanic;`;
+    var sqlstmt_par = `INSERT INTO WT_TABLE_LONG 
+                       -- height --
+                       SELECT a.patid,b.measure_date::date,
+                              round(datediff(day,a.birth_date,b.measure_date::date)/365.25),
+                              'HT',b.ht/39.37,'`+ site +`','VITAL' -- default at 'in'
+                       FROM GPC_TABLE1 a
+                       JOIN `+ site_cdm +`.lds_vital b ON a.patid = b.patid
+                       WHERE b.ht is not null
+                       UNION
+                       select a.PATID,oc.OBSCLIN_START_DATE::date,
+                              round(datediff(day,a.birth_date,oc.OBSCLIN_START_DATE::date)/365.25),'HT',
+                              case when lower(oc.OBSCLIN_RESULT_UNIT) like '%cm%' then oc.OBSCLIN_RESULT_NUM/1000
+                                   else oc.OBSCLIN_RESULT_NUM/39.37 end,
+                              '`+ site +`','OBSCLIN'
+                       FROM GPC_TABLE1 a
+                       JOIN `+ site_cdm +`.deid_obs_clin oc ON a.patid = oc.patid AND
+                            oc.OBSCLIN_TYPE = 'LC' and oc.OBSCLIN_CODE = '8302-2'
+                       UNION
+                       -- weight --
+                       SELECT a.patid,b.measure_date::date,
+                              round(datediff(day,a.birth_date,b.measure_date::date)/365.25),
+                              'WT',b.wt/2.205,'`+ site +`','VITAL' -- default at 'lb'
+                       FROM GPC_TABLE1 a
+                       JOIN `+ site_cdm +`.deid_vital b ON a.patid = b.patid
+                       WHERE b.wt is not null
+                       UNION
+                       select a.PATID,oc.OBSCLIN_START_DATE::date,
+                              round(datediff(day,a.birth_date,oc.OBSCLIN_START_DATE::date)/365.25),'WT',
+                              case when lower(oc.OBSCLIN_RESULT_UNIT) like 'g%' then oc.OBSCLIN_RESULT_NUM/1000
+                                   when lower(oc.OBSCLIN_RESULT_UNIT) like '%kg%' then oc.OBSCLIN_RESULT_NUM
+                                   else oc.OBSCLIN_RESULT_NUM/2.205 end,
+                              '`+ site +`','OBSCLIN'
+                       FROM GPC_TABLE1 a
+                       JOIN `+ site_cdm +`.deid_obs_clin oc ON a.patid = oc.patid AND
+                            oc.OBSCLIN_TYPE = 'LC' and oc.OBSCLIN_CODE = '29463-7'
+                       UNION
+                       -- bmi --
+                       SELECT a.patid,b.measure_date::date,
+                              round(datediff(day,a.birth_date,b.measure_date::date)/365.25),
+                              'BMI',b.ORIGINAL_BMI,'`+ site +`','VITAL'
+                       FROM GPC_TABLE1 a
+                       JOIN `+ site_cdm +`.deid_vital b ON a.patid = b.patid
+                       WHERE b.ORIGINAL_BMI is not null AND a.site = '`+ site +`'
+                       UNION
+                       select a.PATID,oc.OBSCLIN_START_DATE::date,
+                              round(datediff(day,a.birth_date,oc.OBSCLIN_START_DATE::date)/365.25),
+                              'BMI',oc.OBSCLIN_RESULT_NUM,'`+ site +`','OBSCLIN'   
+                       FROM GPC_TABLE1 a
+                       JOIN `+ site_cdm +`.deid_obs_clin oc ON a.patid = oc.patid AND
+                            oc.OBSCLIN_TYPE = 'LC' and oc.OBSCLIN_CODE = '39156-5'
+                       ;`;
 
     // run query
     var sqlstmt_run = snowflake.createStatement({sqlText:sqlstmt_par});
@@ -415,8 +401,8 @@ for(i=0; i<SITES.length; i++){
 $$
 ;
 
-truncate WT_TABLE1;
-call get_wt_table1(array_construct(
+truncate WT_TABLE_LONG;
+call get_wt_table_long(array_construct(
      'ALLINA'
     ,'IHC'
     ,'KUMC'
@@ -432,6 +418,62 @@ call get_wt_table1(array_construct(
     ,'WASHU'
 ));
 
+create or replace table WT_TABLE1 as
+with daily_agg as(
+    select patid,measure_date,age_at_measure,HT,WT,
+           case when BMI>100 then NULL else BMI end as BMI,
+           case when round(WT/(HT*HT))>100 then NULL else round(WT/(HT*HT)) end as BMI_CALCULATED
+    from (
+        select patid, 
+               measure_type, 
+               measure_date, 
+               age_at_measure, 
+               median(measure_num) as measure_num
+    from WT_TABLE_LONG
+    group by patid, measure_type, measure_date,age_at_measure
+    ) 
+    pivot(
+        median(measure_num) 
+        for measure_type in ('HT','WT','BMI')
+    ) as p(patid,measure_date,age_at_measure,HT,WT,BMI)
+    where WT is not null and HT is not null and WT>0 and HT>0
+), pat_ord as(
+    select patid,measure_date,age_at_measure,
+           ht,wt,NVL(bmi_calculated,bmi) as bmi,
+           row_number() over (partition by patid order by measure_date) as rn
+    from daily_agg
+    where NVL(BMI,BMI_CALCULATED) is not null and NVL(BMI,BMI_CALCULATED)>0
+)
+select a.patid,
+       b.birth_date,
+       a.measure_date as index_date,
+       a.age_at_measure as age_at_index,
+       a.ht,
+       a.wt,
+       a.bmi,
+       b.sex, 
+       CASE WHEN b.race IN ('05') THEN 'white' 
+            WHEN b.race IN ('03') THEN 'black'
+            WHEN b.race IN ('NI','UN',NULL) THEN 'NI'
+            ELSE 'ot' END AS race, 
+       CASE WHEN b.hispanic = 'Y' THEN 'hispanic' 
+            WHEN b.hispanic = 'N' THEN 'non-hispanic' 
+            WHEN b.hispanic IN ('NI','UN',NULL) THEN 'NI'
+            ELSE 'ot' END AS hispanic,
+       case when a.age_at_measure < 19 then 'agegrp1'
+            when a.age_at_measure >= 19 and a.age_at_measure < 24 then 'agegrp2'
+            when a.age_at_measure >= 25 and a.age_at_measure < 85 then 'agegrp' || (floor((a.age_at_measure - 25)/5) + 3)
+            else 'agegrp15' end as agegrp_at_index,
+       MAX(NVL(b.CMS_ENR_IND,0)) AS CMS_ENR_IND,
+       MAX(NVL(b.CMS_AB_CONT5YR,0)) AS CMS_AB_CONT5YR,
+       MAX(NVL(b.CMS_D_CONT5YR,0)) AS CMS_D_CONT5YR
+from pat_ord a
+join GPC_TABLE1 b on a.patid = b.patid
+where a.rn = 1
+group by a.patid,b.birth_date,a.measure_date,a.age_at_measure,a.ht,a.wt,a.bmi,b.sex,b.race,b.hispanic
+;
+
+
 /*create summary container*/
 create or replace table DSTAT_COHORT(
     SITE varchar(10),
@@ -439,8 +481,7 @@ create or replace table DSTAT_COHORT(
     DATA_COVERAGE varchar(20),
     SUMM_VAR varchar(20),
     SUMM_CAT varchar(20),
-    SUMM_CNT integer,
-    SUMM_PROP double
+    SUMM_CNT integer
 );
 
 /*get quick summaries*/
@@ -455,173 +496,88 @@ $$
  * Dependency: Table1 for each cohort has been created
 */
 // dynamic query
-var insert_summ = `INSERT INTO DSTAT_COHORT
-                    WITH cte_N AS (
-                        SELECT COUNT(DISTINCT patid) AS N 
-                        FROM `+ COHORT +`_TABLE1
-                    ),  cte_site_N AS (
-                        SELECT site, COUNT(DISTINCT patid) AS N 
-                        FROM `+ COHORT +`_TABLE1
-                        GROUP BY site
-                    )
-                    -------------------overall---------------------------------------
-                    SELECT 'GPC','`+ COHORT +`','XWALK','n','n',COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                    FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N n
-                    WHERE gpc.CMS_ENR_IND = 1 GROUP BY n.N
+var insert_summ = `INSERT INTO DSTAT_COHORT            
+                    -------------------overall-xwalk---------------------------------------
+                    SELECT 'GPC','`+ COHORT +`','XWALK','N','N',COUNT(DISTINCT gpc.PATID)
+                    FROM `+ COHORT +`_TABLE1 gpc
+                    WHERE gpc.CMS_ENR_IND = 1
                     UNION
-                    SELECT 'GPC','`+ COHORT +`','XWALK_AB5YR','n','n',COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                    FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N n
-                    WHERE gpc.CMS_AB_CONT5YR = 1 GROUP BY n.N
+                    SELECT 'GPC','`+ COHORT +`','XWALK_AB5YR','N','N',COUNT(DISTINCT gpc.PATID)
+                    FROM `+ COHORT +`_TABLE1 gpc
+                    WHERE gpc.CMS_AB_CONT5YR = 1
                     UNION
-                    SELECT 'GPC','`+ COHORT +`','XWALK_D5YR','n','n',COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                    FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N n
-                    WHERE gpc.CMS_D_CONT5YR = 1 GROUP BY n.N
+                    SELECT 'GPC','`+ COHORT +`','XWALK_D5YR','N','N',COUNT(DISTINCT gpc.PATID)
+                    FROM `+ COHORT +`_TABLE1 gpc
+                    WHERE gpc.CMS_D_CONT5YR = 1
                     UNION                  
                     -------------------by site-----------------------------------------
-                    SELECT gpc.site,'`+ COHORT +`','XWALK','n','n',COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                    FROM GPC_TABLE1 gpc JOIN cte_site_N n 
-                    ON n.site = gpc.site
+                    SELECT gpc.site,'`+ COHORT +`','XWALK','N','N',COUNT(DISTINCT gpc.PATID)
+                    FROM GPC_TABLE1 gpc
                     WHERE gpc.CMS_ENR_IND = 1 AND
                           EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                    GROUP BY gpc.site,n.N 
+                    GROUP BY gpc.site
                     UNION
-                    SELECT gpc.site,'`+ COHORT +`','XWALK_AB5YR','n','n',COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                    FROM GPC_TABLE1 gpc JOIN cte_site_N n 
-                    ON n.site = gpc.site 
+                    SELECT gpc.site,'`+ COHORT +`','XWALK_AB5YR','N','N',COUNT(DISTINCT gpc.PATID)
+                    FROM GPC_TABLE1 gpc
                     WHERE gpc.CMS_AB_CONT5YR = 1 AND
                           EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                    GROUP BY gpc.site,n.N
+                    GROUP BY gpc.site
                     UNION
-                    SELECT gpc.site,'`+ COHORT +`','XWALK_D5YR','n','n',COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                    FROM GPC_TABLE1 gpc JOIN cte_site_N n 
-                    ON n.site = gpc.site 
+                    SELECT gpc.site,'`+ COHORT +`','XWALK_D5YR','N','N',COUNT(DISTINCT gpc.PATID)
+                    FROM GPC_TABLE1 gpc
                     WHERE gpc.CMS_D_CONT5YR = 1 AND
                           EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                    GROUP BY gpc.site,n.N
+                    GROUP BY gpc.site
+                    UNION
+                    -------------------overall-xwalk-demo-----------------------------------------
+                    SELECT 'GPC','`+ COHORT +`','XWALK','agegrp_at_index',gpc.agegrp_at_index,COUNT(DISTINCT gpc.PATID)
+                    FROM `+ COHORT +`_TABLE1 gpc
+                    WHERE gpc.CMS_ENR_IND = 1
+                    GROUP BY gpc.agegrp_at_index
+                    UNION
+                    SELECT 'GPC','`+ COHORT +`','XWALK','sex',gpc.sex,COUNT(DISTINCT gpc.PATID)
+                    FROM `+ COHORT +`_TABLE1 gpc
+                    WHERE gpc.CMS_ENR_IND = 1
+                    GROUP by gpc.sex
+                    UNION
+                    SELECT 'GPC','`+ COHORT +`','XWALK','race',gpc.race,COUNT(DISTINCT gpc.PATID)
+                    FROM `+ COHORT +`_TABLE1 gpc
+                    WHERE gpc.CMS_ENR_IND = 1
+                    GROUP BY gpc.race
+                    UNION
+                    SELECT 'GPC','`+ COHORT +`','XWALK','hispanic',gpc.hispanic,COUNT(DISTINCT gpc.PATID) 
+                    FROM `+ COHORT +`_TABLE1 gpc
+                    WHERE gpc.CMS_ENR_IND = 1
+                    GROUP by gpc.hispanic
+                    UNION
+                    -------------------by site-xwalk-demo-----------------------------------------
+                    SELECT gpc.site,'`+ COHORT +`','XWALK','agegrp_at_index',gpc.agegrp_at_index,COUNT(DISTINCT gpc.PATID)
+                    FROM GPC_TABLE1 gpc 
+                    WHERE gpc.CMS_ENR_IND = 1 AND
+                          EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
+                    GROUP BY gpc.site,gpc.agegrp_at_index
+                    UNION
+                    SELECT gpc.site,'`+ COHORT +`','XWALK','sex',gpc.sex,COUNT(DISTINCT gpc.PATID)
+                    FROM GPC_TABLE1 gpc 
+                    WHERE gpc.CMS_ENR_IND = 1 AND
+                          EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
+                    GROUP BY gpc.site,gpc.sex
+                    UNION
+                    SELECT gpc.site,'`+ COHORT +`','XWALK','race',gpc.race,COUNT(DISTINCT gpc.PATID) 
+                    FROM GPC_TABLE1 gpc 
+                    WHERE gpc.CMS_ENR_IND = 1 AND
+                          EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
+                    GROUP BY gpc.site,gpc.race
+                    UNION
+                    SELECT gpc.site,'`+ COHORT +`','XWALK','hispanic',gpc.hispanic,COUNT(DISTINCT gpc.PATID)
+                    FROM GPC_TABLE1 gpc 
+                    WHERE gpc.CMS_ENR_IND = 1 AND
+                          EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
+                    GROUP BY gpc.site,gpc.hispanic
                     ;`; 
 // run query
 var insert_summ_run = snowflake.createStatement({sqlText:insert_summ});
 insert_summ_run.execute(); 
-
-var insert_summ_demo = `INSERT INTO DSTAT_COHORT
-                        WITH cte_N AS (
-                            SELECT COUNT(DISTINCT patid) AS N 
-                            FROM `+ COHORT +`_TABLE1
-                            WHERE CMS_ENR_IND = 1
-                        ),  cte_site_N AS (
-                            SELECT a.site, COUNT(DISTINCT a.patid) AS N 
-                            FROM GPC_TABLE1 a
-                            WHERE CMS_ENR_IND = 1 AND
-                                  EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE a.patid = cohort.patid)
-                            GROUP BY site
-                        ),  cte_N_EHR AS (
-                            SELECT COUNT(DISTINCT patid) AS N 
-                            FROM `+ COHORT +`_TABLE1
-                        ),  cte_site_N_EHR AS (
-                            SELECT a.site, COUNT(DISTINCT a.patid) AS N 
-                            FROM GPC_TABLE1 a
-                            WHERE EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE a.patid = cohort.patid)
-                        )
-                        -------------------overall-xwalk-demo-----------------------------------------
-                        SELECT 'GPC','`+ COHORT +`','XWALK','agegrp_at_index',gpc.agegrp_at_index,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N n
-                        WHERE gpc.PATID_IDX = 1 AND gpc.CMS_ENR_IND = 1 GROUP BY gpc.agegrp_at_index,n.N
-                        UNION
-                        SELECT 'GPC','`+ COHORT +`','XWALK','sex',gpc.sex,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N n
-                        WHERE gpc.PATID_IDX = 1 AND gpc.CMS_ENR_IND = 1 GROUP BY gpc.sex,n.N
-                        UNION
-                        SELECT 'GPC','`+ COHORT +`','XWALK','race',gpc.race,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N n
-                        WHERE gpc.PATID_IDX = 1 AND gpc.CMS_ENR_IND = 1 GROUP BY gpc.race,n.N
-                        UNION
-                        SELECT 'GPC','`+ COHORT +`','XWALK','hispanic',gpc.hispanic,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N n
-                        WHERE gpc.PATID_IDX = 1 AND gpc.CMS_ENR_IND = 1 GROUP BY gpc.hispanic,n.N
-                        UNION
-                        -------------------by site-xwalk-demo-----------------------------------------
-                        SELECT gpc.site,'`+ COHORT +`','XWALK','agegrp_at_index',gpc.agegrp_at_index,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM GPC_TABLE1 gpc 
-                        JOIN cte_site_N n ON n.site = gpc.site
-                        WHERE gpc.PATID_IDX = 1 AND gpc.CMS_ENR_IND = 1 AND
-                              EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                        GROUP BY gpc.site,gpc.agegrp_at_index,n.N
-                        UNION
-                        SELECT gpc.site,'`+ COHORT +`','XWALK','sex',gpc.sex,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM GPC_TABLE1 gpc 
-                        JOIN cte_site_N n ON n.site = gpc.site
-                        WHERE gpc.PATID_IDX = 1 AND gpc.CMS_ENR_IND = 1 AND
-                              EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                        GROUP BY gpc.site,gpc.sex,n.N
-                        UNION
-                        SELECT gpc.site,'`+ COHORT +`','XWALK','race',gpc.race,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM GPC_TABLE1 gpc 
-                        JOIN cte_site_N n ON n.site = gpc.site
-                        WHERE gpc.PATID_IDX = 1 AND gpc.CMS_ENR_IND = 1 AND
-                              EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                        GROUP BY gpc.site,gpc.race,n.N
-                        UNION
-                        SELECT gpc.site,'`+ COHORT +`','XWALK','hispanic',gpc.hispanic,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM GPC_TABLE1 gpc 
-                        JOIN cte_site_N n ON n.site = gpc.site
-                        WHERE gpc.PATID_IDX = 1 AND gpc.CMS_ENR_IND = 1 AND
-                              EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                        GROUP BY gpc.site,gpc.hispanic,n.N
-                        UNION
-                        -------------------overall-demo-----------------------------------------
-                        SELECT 'GPC','`+ COHORT +`','EHR','agegrp_at_index',gpc.agegrp_at_index,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N_EHR n
-                        WHERE gpc.PATID_IDX = 1 
-                        GROUP BY gpc.agegrp_at_index,n.N
-                        UNION
-                        SELECT 'GPC','`+ COHORT +`','EHR','sex',gpc.sex,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N_EHR n
-                        WHERE gpc.PATID_IDX = 1 
-                        GROUP BY gpc.sex,n.N
-                        UNION
-                        SELECT 'GPC','`+ COHORT +`','EHR','race',gpc.race,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N_EHR n
-                        WHERE gpc.PATID_IDX = 1 
-                        GROUP BY gpc.race,n.N
-                        UNION
-                        SELECT 'GPC','`+ COHORT +`','EHR','hispanic',gpc.hispanic,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM `+ COHORT +`_TABLE1 gpc CROSS JOIN cte_N_EHR n
-                        WHERE gpc.PATID_IDX = 1 
-                        GROUP BY gpc.hispanic,n.N
-                        UNION
-                        -------------------by site-demo-----------------------------------------
-                        SELECT gpc.site,'`+ COHORT +`','XWALK','agegrp_at_index',gpc.agegrp_at_index,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM GPC_TABLE1 gpc 
-                        JOIN cte_site_N n ON n.site = gpc.site
-                        WHERE gpc.PATID_IDX = 1 AND
-                              EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                        GROUP BY gpc.site,gpc.agegrp_at_index,n.N
-                        UNION
-                        SELECT gpc.site,'`+ COHORT +`','XWALK','sex',gpc.sex,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM GPC_TABLE1 gpc 
-                        JOIN cte_site_N n ON n.site = gpc.site
-                        WHERE gpc.PATID_IDX = 1 AND
-                              EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                        GROUP BY gpc.site,gpc.sex,n.N
-                        UNION
-                        SELECT gpc.site,'`+ COHORT +`','XWALK','race',gpc.race,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM GPC_TABLE1 gpc 
-                        JOIN cte_site_N n ON n.site = gpc.site
-                        WHERE gpc.PATID_IDX = 1 AND
-                              EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                        GROUP BY gpc.site,gpc.race,n.N
-                        UNION
-                        SELECT gpc.site,'`+ COHORT +`','XWALK','hispanic',gpc.hispanic,COUNT(DISTINCT gpc.PATID),ROUND(COUNT(DISTINCT gpc.PATID)/n.N,4) 
-                        FROM GPC_TABLE1 gpc 
-                        JOIN cte_site_N n ON n.site = gpc.site
-                        WHERE gpc.PATID_IDX = 1 AND
-                              EXISTS (SELECT 1 from `+ COHORT +`_TABLE1 cohort WHERE gpc.patid = cohort.patid)
-                        GROUP BY gpc.site,gpc.hispanic,n.N
-                        ;`; 
-// run query
-var insert_summ_demo_run = snowflake.createStatement({sqlText:insert_summ_demo});
-insert_summ_demo_run.execute(); 
-
 $$
 ;
 
@@ -630,3 +586,75 @@ call get_xwalk_summ('GPC');
 call get_xwalk_summ('ALS');
 call get_xwalk_summ('BC');
 call get_xwalk_summ('WT');
+
+
+-- add medicare population info
+INSERT INTO DSTAT_COHORT
+with rec_addr as (
+    SElECT patid, address_state, 
+           min(address_period_start) over (partition by patid order by address_period_end) as enroll_start_date,
+           row_number() over (partition by patid order by address_period_end desc) as rn
+    FROM CMS_PCORNET_CDM.LDS_LDS_ADDRESS_HISTORY
+),  rec_addr_demo as (
+    SELECT a.patid, a.address_state,
+           b.sex, 
+           CASE WHEN b.race IN ('05') THEN 'white' 
+                WHEN b.race IN ('03') THEN 'black'
+                WHEN b.race IN ('NI','UN',NULL) THEN 'NI'
+                ELSE 'ot' END AS race, 
+           CASE WHEN b.hispanic = 'Y' THEN 'hispanic' 
+                WHEN b.hispanic = 'N' THEN 'non-hispanic' 
+                WHEN b.hispanic IN ('NI','UN',NULL) THEN 'NI'
+                ELSE 'ot' END AS hispanic,
+           round(datediff(day,b.birth_date,a.enroll_start_date)/365.25) as age_at_enroll
+    FROM rec_addr a
+    JOIN CMS_PCORNET_CDM.LDS_DEMOGRAPHIC b 
+    ON a.patid = b.patid
+    WHERE a.rn = 1
+),  regrp_age as (
+    SELECT a.*, 
+    case when a.age_at_enroll < 19 then 'agegrp1'
+         when a.age_at_enroll >= 19 and a.age_at_enroll < 24 then 'agegrp2'
+         when a.age_at_enroll >= 25 and a.age_at_enroll < 85 then 'agegrp' || (floor((a.age_at_enroll - 25)/5) + 3)
+         else 'agegrp15' end as agegrp_at_enroll
+    from rec_addr_demo a
+)
+select 'CMS', 'CMS', 'CMS', 'N','N',count(distinct patid)
+from rec_addr
+union
+select  'CMS', 'CMS', address_state, 'N','N',count(distinct patid)
+from rec_addr
+group by address_state
+union
+SELECT 'CMS','CMS','CMS','sex',sex,COUNT(DISTINCT PATID) 
+FROM regrp_age 
+GROUP BY sex
+union
+SELECT 'CMS','CMS','CMS','race',race,COUNT(DISTINCT PATID) 
+FROM regrp_age 
+GROUP BY race
+union
+SELECT 'CMS','CMS','CMS','hispanic',hispanic,COUNT(DISTINCT PATID) 
+FROM regrp_age 
+GROUP BY hispanic
+union
+SELECT 'CMS','CMS','CMS','agegrp_at_enroll',agegrp_at_enroll,COUNT(DISTINCT PATID) 
+FROM regrp_age 
+GROUP BY agegrp_at_enroll
+union
+select  'CMS', 'CMS', address_state,'sex',sex,count(distinct patid)
+from regrp_age
+group by address_state,sex
+union
+select  'CMS', 'CMS', address_state,'race',race,count(distinct patid)
+from regrp_age
+group by address_state,race
+union
+select  'CMS', 'CMS', address_state,'hispanic',hispanic,count(distinct patid)
+from regrp_age
+group by address_state,hispanic
+union
+select  'CMS', 'CMS', address_state,'agegrp_at_enroll',agegrp_at_enroll,count(distinct patid)
+from regrp_age
+group by address_state,agegrp_at_enroll
+;

@@ -3,10 +3,10 @@
 # Author: Xing Song, xsm7f@umsystem.edu                            
 # File: procedures_ddl.sql                                                 
 # DDL script for initializing intermediate and resulting tables:                                               
-# - PRIVATE_PROCEDURES
+# - PROCEDURES
 */
 -- initialize table
-create or replace table PRIVATE_PROCEDURES (
+create or replace table PROCEDURES (
 	 PROCEDURESID varchar(200)
 	,PATID varchar(50) NOT NULL
 	,ENCOUNTERID varchar(50) NOT NULL

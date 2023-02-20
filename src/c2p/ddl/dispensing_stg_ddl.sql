@@ -12,10 +12,13 @@ create or replace table PRIVATE_DISPENSING_STAGE (
      PDE_ID varchar(50) NOT NULL
 	,BENE_ID varchar(20) NOT NULL
     ,PRSCRBID varchar(20) NOT NULL
+    ,PRVDR_ID varchar(20)
     ,SRVC_DT date
 	,PRDSRVID varchar(15)
 	,DAYSSPLY integer
 	,QTYDSPNS integer
+    ,BN varchar(50)
+    ,GNN varchar(50)
 	,STR varchar(50)
 	,GCDF varchar(50)
 	,GCDF_DESC varchar(50)

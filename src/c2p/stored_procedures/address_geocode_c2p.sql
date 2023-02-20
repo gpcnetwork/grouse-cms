@@ -17,7 +17,7 @@ $$
 /*
 Dependency: PRIVATE_ADDRESS_HISTORY up to date
 @param{string} GEO_MAPPING: name of geocoding mapping source table
-@param{string} SRC_KEY: name of source column (from PRIVATE_ADDRESS_HISTORY_STAGE) used for mapping
+@param{string} SRC_KEY: name of source column (from PRIVATE_ADDRESS_HISTORY) used for mapping
 */
 // collect target table columns
 var collect_tgt_stmt = snowflake.createStatement({
@@ -48,7 +48,8 @@ var t1_qry = `MERGE INTO private_address_geocode t
                       ,substr(rpad(b.geoid_to,15,'0'),1,11) AS geocode_tract
                       ,substr(rpad(b.geoid_to,15,'0'),1,12) AS geocode_group
                       ,substr(rpad(b.geoid_to,15,'0'),1,15) AS geocode_block
-                      ,a.address_zip9 AS geocode_zip
+                      ,a.address_zip9 AS geocode_zip9 -- padding occured at PRIVATE_ADDRESS_HISTORY table
+                      ,substr(a.address_zip9,1,5) AS geocode_zip5
                       ,b.geocode_zcta
                       ,b.geocode_custom
                       ,b.geocode_custom_text

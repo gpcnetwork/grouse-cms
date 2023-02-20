@@ -13,7 +13,7 @@ as
 $$
 /**stage encounter table from different CMS table
  * @param {string} SRC_SCHEMA: source schema for staging
- * @param {string} PART: part name of source table
+ * @param {string} PART: part name of source table, NULL suggests all mappable tables
 **/
 
 // collect columns from target staging table
@@ -35,7 +35,7 @@ while (tables.next())
     var cols = tables.getColumnValue(2).split(",");
     let stg_pt_qry = '';
        
-    if(table.includes('MEDPAR') && (table.include(PART)||(PART===undefined))){
+    if(table.includes('MEDPAR') && (table.includes(PART)||(PART===undefined))){
         // parameters for source table
         var collate_col_stmt = `SELECT table_name, listagg(column_name,',') as cols 
                                 FROM information_schema.columns 
@@ -69,7 +69,7 @@ while (tables.next())
                        SELECT `+ cols +`, '`+ SRC_SCHEMA +`', 'MEDPAR_ALL'
                        FROM cte_unpvt;`;
                        
-    } else if(table.includes('OUTPATIENT') && (table.include(PART)||(PART===undefined))){
+    } else if(table.includes('OUTPATIENT') && (table.includes(PART)||(PART===undefined))){
         // parameters for source table
         var collate_col_stmt = `SELECT table_name, listagg(column_name,',') as cols 
                                 FROM information_schema.columns 
@@ -112,16 +112,16 @@ while (tables.next())
                         WHERE REGEXP_SUBSTR(px_idx,'[[:digit:]]') = REGEXP_SUBSTR(pxdt_idx,'[[:digit:]]')
                               `+ pxtype_phrase[2] +`
                         ), multi_part AS (
-                        SELECT bene_id,clm_id,NVL(op_npi,at_npi) AS provider_npi,px,px_type,px_date,ppx,'`+ table_raw +`' AS src_table,px_idx
+                        SELECT bene_id,clm_id,NVL(NULLIF(TRIM(op_npi),''),NULLIF(TRIM(at_npi),'')) AS provider_npi,px,px_type,px_date,ppx,'`+ table_raw +`' AS src_table,px_idx
                         FROM cte_unpvt
                         UNION
-                        SELECT a.bene_id,a.clm_id,NVL(a.rndrng_physn_npi,b.at_npi),a.hcpcs_cd,'CH',NVL(a.rev_dt,a.thru_dt),'NI','`+ table_alt +`',
+                        SELECT a.bene_id,a.clm_id,NVL(NULLIF(TRIM(a.rndrng_physn_npi),''),NULLIF(TRIM(b.at_npi),'')),a.hcpcs_cd,'CH',NVL(a.rev_dt,a.thru_dt),'NI','`+ table_alt +`',
                                ROW_NUMBER() OVER (PARTITION BY a.bene_id,a.clm_id ORDER BY NVL(a.rev_dt,a.thru_dt))
                         FROM `+ SRC_SCHEMA +`.`+ table_alt +` a
                         JOIN `+ SRC_SCHEMA +`.`+ table_raw +` b ON a.bene_id = b.bene_id AND a.clm_id = b.clm_id
                         WHERE a.hcpcs_cd <> ''   
                         UNION
-                        SELECT a.bene_id,a.clm_id,NVL(a.rndrng_physn_npi,b.at_npi),a.rev_cntr,'RE',NVL(a.rev_dt,a.thru_dt),'NI','`+ table_alt +`',
+                        SELECT a.bene_id,a.clm_id,NVL(NULLIF(TRIM(a.rndrng_physn_npi),''),NULLIF(TRIM(b.at_npi),'')),a.rev_cntr,'RE',NVL(a.rev_dt,a.thru_dt),'NI','`+ table_alt +`',
                                ROW_NUMBER() OVER (PARTITION BY a.bene_id,a.clm_id ORDER BY NVL(a.rev_dt,a.thru_dt))
                         FROM `+ SRC_SCHEMA +`.`+ table_alt +` a
                         JOIN `+ SRC_SCHEMA +`.`+ table_raw +` b ON a.bene_id = b.bene_id AND a.clm_id = b.clm_id
@@ -130,22 +130,22 @@ while (tables.next())
                         SELECT `+ cols +`, '`+ SRC_SCHEMA +`', src_table
                         FROM multi_part;`;
                      
-    } else if((table.includes('HHA') || table.includes('HOSPICE')) && (table.include(PART)||(PART===undefined))){
+    } else if((table.includes('HHA') || table.includes('HOSPICE')) && (table.includes(PART)||(PART===undefined))){
         // parameters for source table
         var table_raw = table.includes('HHA') ? 'HHA_BASE_CLAIMS' : 'HOSPICE_BASE_CLAIMS';
         var table_alt = table_raw.replace('BASE_CLAIMS','REVENUE_CENTER');
         
         stg_pt_qry += `INSERT INTO `+ table +`(`+ cols +`,src_schema,src_table)
                         WITH multi_part AS (
-                            SELECT a.bene_id,a.clm_id,NVL(a.rndrng_physn_npi,b.at_npi) AS provider_npi,a.hcpcs_cd AS px,
+                            SELECT a.bene_id,a.clm_id,NVL(NULLIF(TRIM(a.rndrng_physn_npi),''),NULLIF(TRIM(b.at_npi),'')) AS provider_npi,a.hcpcs_cd AS px,
                                    'CH' AS px_type,NVL(a.rev_dt,a.thru_dt) AS px_date,
-                                   ROW_NUMBER() OVER (PARTITION BY a.bene_id,a.clm_id ORDER BY NVL(a.rndrng_physn_npi,b.at_npi)) AS px_idx
+                                   ROW_NUMBER() OVER (PARTITION BY a.bene_id,a.clm_id ORDER BY NVL(a.rev_dt,a.thru_dt)) AS px_idx
                             FROM `+ SRC_SCHEMA +`.`+ table_alt +` a
                             JOIN `+ SRC_SCHEMA +`.`+ table_raw +` b ON a.bene_id = b.bene_id AND a.clm_id = b.clm_id 
                             WHERE a.hcpcs_cd <> '' AND a.hcpcs_cd is not null
                             UNION
-                            SELECT a.bene_id,a.clm_id,NVL(a.rndrng_physn_npi,b.at_npi),a.rev_cntr,'RE',NVL(a.rev_dt,a.thru_dt),
-                                   ROW_NUMBER() OVER (PARTITION BY a.bene_id,a.clm_id ORDER BY NVL(a.rndrng_physn_npi,b.at_npi))
+                            SELECT a.bene_id,a.clm_id,NVL(NULLIF(TRIM(a.rndrng_physn_npi),''),NULLIF(TRIM(b.at_npi),'')),a.rev_cntr,'RE',NVL(a.rev_dt,a.thru_dt),
+                                   ROW_NUMBER() OVER (PARTITION BY a.bene_id,a.clm_id ORDER BY NVL(a.rev_dt,a.thru_dt))
                             FROM `+ SRC_SCHEMA +`.`+ table_alt +` a
                             JOIN `+ SRC_SCHEMA +`.`+ table_raw +` b ON a.bene_id = b.bene_id AND a.clm_id = b.clm_id 
                             WHERE a.hcpcs_cd = '' OR a.hcpcs_cd is null
@@ -154,7 +154,7 @@ while (tables.next())
                         FROM multi_part;`;
     
     
-    } else if((table.includes('BCARRIER') || table.includes('DME')) && (table.include(PART)||(PART===undefined))){
+    } else if((table.includes('BCARRIER') || table.includes('DME')) && (table.includes(PART)||(PART===undefined))){
         // parameters for source table
         var table_raw = table.includes('BCARRIER') ? 'BCARRIER_LINE' : 'DME_LINE';
         var collate_col_stmt = `SELECT table_name, listagg(column_name,',') as cols  

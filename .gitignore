@@ -1,0 +1,6 @@
+*data/
+*tmp_dir/
+*.*/*
+*archive/
+*src/_*
+*.config*

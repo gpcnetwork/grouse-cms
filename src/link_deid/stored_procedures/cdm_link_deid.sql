@@ -215,6 +215,7 @@ while (tables.next()){
                                 JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw5 ON a.geocode_zip5 = gxw5.geoid AND gxw5.geoid_type = 'GEOCODE_ZIP5'
                                 JOIN geoid_mapping.geocodeid_xwalk_`+ SITE +` gxw6 ON a.geocode_county = gxw6.geoid AND gxw6.geoid_type = 'GEOCODE_COUNTY'
                                 ;`;
+                                
        // similar to LDS with more location-sensitive columns removed 
        }else if (tbl.includes('OBS_COMM')){
             var deid_t_qry = `CREATE OR REPLACE TABLE `+ cdm_schema +`.`+ deid_tbl +` AS

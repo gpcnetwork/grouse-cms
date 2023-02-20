@@ -19,7 +19,10 @@ import pyreadstat
 from typing import Optional
 import pandas as pd
 from datetime import date,timedelta
-
+import logging
+from botocore.exceptions import ClientError
+from io import StringIO 
+import s3fs
 
 @dataclass
 class AWSSecrets:
@@ -122,14 +125,35 @@ def SfExec_ScriptsFromFile(conn, path_to_file):
         except Exception as e:
             print("Command skipped: ", e)
 
-def Download_S3Objects(bucket_name,path_to_src_obj,download_file,verbose=True)->None:
+def Download_S3Objects(bucket_name,path_to_src_obj,download_file,s3_client=None,verbose=True)->None:
     # download data to local storage
+    if s3_client is None:
+        s3_client = boto3.client('s3') # Using the default session
     s3_client = boto3.resource('s3')
     s3_bucket = s3_client.Bucket(bucket_name)
-    s3_bucket.download_file(Key = path_to_src_obj,
-                            Filename = download_file)
+    s3_bucket.download_file(
+        Key = path_to_src_obj,
+        Filename = download_file
+    )
     if verbose: 
         print(f'file {path_to_src_obj} downloaded!')
+
+# untested!
+def Upload_S3Objects(file_to_save,bucket_name,tgt_key,s3_client=None)->None:
+    if s3_client is None:
+        s3_client = boto3.client('s3') # Using the default session
+    # download from memory to disk
+    file_name = tgt_key.split('/',1)[-1]
+    with open(file_name, 'a') as f:
+        #https://stackoverflow.com/questions/30991541/pandas-write-csv-append-vs-write
+        file_to_save.to_csv(f, mode='a', header=f.tell()==0)
+    # upload_file from disk to s3
+    try:
+        with open(file_name, 'rb') as f:
+            s3_client.upload_fileobj(f, bucket_name, tgt_key)
+    except ClientError as e:
+        logging.error(e)
+
 
 def Read_SAS7bDAT(src_sas,row_offset=0,row_limit=-1,num_processes=1,verbose=True,encoding='utf-8')->list:
     # load into current session as pandas dataframe

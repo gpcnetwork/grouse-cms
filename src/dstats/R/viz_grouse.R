@@ -25,7 +25,7 @@ dt3<-read.csv("./data/xwalk_summary_3cohorts.csv",stringsAsFactors = F)
 
 # overview
 dt3_enc<-dt3 %>% 
-  filter(SUMM_VAR == "n" & COHORT == "GPC" & DATA_COVERAGE == "XWALK") %>%
+  filter(SUMM_VAR == "N" & COHORT == "GPC" & DATA_COVERAGE == "XWALK") %>%
   select(SITE,SUMM_CNT)
 ggplot(dt1 %>% 
          inner_join(dt2 %>% select(-BENE_CNT),by="SITEID") %>%
@@ -37,126 +37,132 @@ ggplot(dt1 %>%
   geom_point(aes(size = BENE_CNT_INCLD/1000),alpha = 0.8,color='red')+
   geom_point(aes(size = SUMM_CNT/1000),alpha = 0.8,color='green')+
   scale_size(range = c(.1, 24), name="Population(K)")+
-  geom_text_repel(aes(label=label))
+  geom_text_repel(aes(label=label))+
+  theme(legend.position="none")
+
+plot_cohort_overview<-function(){
+  
+  
+  
+}
+
+
+plot_cohort_demo<-function(){
+  
+}
+
+plot_cohort_geo<-function(){
+  
+  
+}
+
+
 
 # weight cohort
 dt3_wt<-dt3 %>%
-  filter(SUMM_VAR == "n" & COHORT == "WT") %>%
+  filter(SUMM_VAR == "N" & SUMM_CAT == "N" & COHORT == "WT"  & DATA_COVERAGE != "ANY") %>%
+  inner_join(dt3 %>%
+               filter(SUMM_VAR == "N" & SUMM_CAT == "N" & COHORT == "WT" & DATA_COVERAGE == "ANY") %>%
+               select(SITE, COHORT, SUMM_CNT) %>%
+               rename(SUMM_DENOM = SUMM_CNT),
+             by=c("SITE","COHORT")) %>%
+  mutate(SUMM_PROP = SUMM_CNT/SUMM_DENOM) %>%
   mutate(label=paste0(round(SUMM_CNT/1000),"K(",round(SUMM_PROP*100),"%)"),
          page = case_when(SITE=="GPC"~"GPC",
                           TRUE ~ "Sites"))
-ggplot(dt3_wt,aes(x=SITE,y=SUMM_CNT,group=DATA_COVERAGE))+
+  
+ggplot(dt3 %>%
+         filter(SUMM_VAR == "N" & SUMM_CAT == "N" & COHORT == "WT" & DATA_COVERAGE == "ANY") %>%
+         mutate(label=paste0(round(SUMM_CNT/1000),"K"),
+                SITE=paste0(letters[rank(-SUMM_CNT)],".",SITE)),
+           aes(x=SITE,y=SUMM_CNT,group=DATA_COVERAGE))+
   geom_bar(aes(fill=DATA_COVERAGE),stat="identity",position="dodge")+
   geom_text(aes(label=label),position=position_dodge(width=1))+
-  facet_wrap(~page,ncol=1,scales="free")
-
-dt3_wt_demo<-dt3 %>% 
-  filter(SUMM_VAR != "n" & COHORT == "WT") %>%
-  mutate(SUMM_CAT = case_when(SUMM_CAT %in% paste0("agegrp",1:9) ~ paste0("agegrp0",gsub("agegrp","",SUMM_CAT)),
-                              TRUE ~ SUMM_CAT)) %>%
-  group_by(SUMM_VAR,SUMM_CAT,DATA_COVERAGE) %>%
-  mutate(label=case_when(SUMM_PROP==max(SUMM_PROP)~ SITE,
-                         TRUE ~ '')) %>%
-  ungroup
-
-ggplot(dt3_wt_demo %>% filter(SITE=="GPC"),
-       aes(x=SUMM_CAT,y=SUMM_PROP))+
-  geom_bar(stat = "identity",position="dodge")+
   theme(axis.text.x=element_text(angle=60),
         text=element_text(face="bold",size=13),
         panel.background = element_rect(fill = NA, colour = NA),
-        panel.grid.major.y = element_line(colour = "grey"))+
-  facet_wrap(~SUMM_VAR,ncol=1,scales = "free")
-  
-ggplot(dt3_wt_demo %>% filter(SITE!="GPC"),aes(x=SUMM_CAT,y=SUMM_PROP,color=SITE))+
-  geom_point(aes(shape=as.factor(DATA_COVERAGE)),size=3) + 
-  geom_line(aes(group=interaction(SITE, DATA_COVERAGE)))+
-  geom_text_repel(aes(label=label))+
-  labs(shape="Data Coverage")+
-  theme(axis.text.x=element_text(angle=60),
-        text=element_text(face="bold",size=13),
-        panel.background = element_rect(fill = NA, colour = NA),
-        panel.grid.major.y = element_line(colour = "grey"))+
-  facet_wrap(~SUMM_VAR,ncol=2,scales = "free")
+        panel.grid.major.y = element_line(colour = "grey"))
 
-# bc cohort
-dt3_bc<-dt3 %>%
-  filter(SUMM_VAR == "n" & COHORT == "BC") %>%
-  mutate(label=paste0(round(SUMM_CNT/1000),"K(",round(SUMM_PROP*100),"%)"),
-         page = case_when(SITE=="GPC"~"GPC",
-                          TRUE ~ "Sites"))
 ggplot(dt3_bc,aes(x=SITE,y=SUMM_CNT,group=DATA_COVERAGE))+
   geom_bar(aes(fill=DATA_COVERAGE),stat="identity",position="dodge")+
   geom_text(aes(label=label),position=position_dodge(width=1))+
+  theme(axis.text.x=element_text(angle=60),
+        text=element_text(face="bold",size=13),
+        panel.background = element_rect(fill = NA, colour = NA),
+        panel.grid.major.y = element_line(colour = "grey"))+
   facet_wrap(~page,ncol=1,scales="free")
 
-dt3_bc_demo<-dt3 %>% 
-  filter(SUMM_VAR != "n" & COHORT == "BC") %>%
-  mutate(SUMM_CAT = case_when(SUMM_CAT %in% paste0("agegrp",1:9) ~ paste0("agegrp0",gsub("agegrp","",SUMM_CAT)),
-                              TRUE ~ SUMM_CAT)) %>%
-  group_by(SUMM_VAR,SUMM_CAT,DATA_COVERAGE) %>%
-  mutate(label=case_when(SUMM_PROP==max(SUMM_PROP)~ SITE,
-                         TRUE ~ '')) %>%
-  ungroup
 
-ggplot(dt3_bc_demo %>% filter(SITE=="GPC"),
-       aes(x=SUMM_CAT,y=SUMM_PROP))+
-  geom_bar(stat = "identity",position="dodge")+
-  theme(axis.text.x=element_text(angle=60),
-        text=element_text(face="bold",size=13),
-        panel.background = element_rect(fill = NA, colour = NA),
-        panel.grid.major.y = element_line(colour = "grey"))+
-  facet_wrap(~SUMM_VAR,ncol=1,scales = "free")
 
-ggplot(dt3_bc_demo %>% filter(SITE!="GPC"),
-       aes(x=SUMM_CAT,y=SUMM_PROP,color=SITE))+
-  geom_point(aes(shape=as.factor(DATA_COVERAGE)),size=3) + 
-  geom_line(aes(group=interaction(SITE, DATA_COVERAGE)))+
-  geom_text_repel(aes(label=label))+
-  labs(shape="Data Coverage")+
-  theme(axis.text.x=element_text(angle=60),
-        text=element_text(face="bold",size=13),
-        panel.background = element_rect(fill = NA, colour = NA),
-        panel.grid.major.y = element_line(colour = "grey"))+
-  facet_wrap(~SUMM_VAR,ncol=2,scales = "free")
 
 # als cohort
 dt3_als<-dt3 %>%
-  filter(SUMM_VAR == "n" & COHORT == "ALS") %>%
-  mutate(label=paste0(SUMM_CNT,"(",round(SUMM_PROP*100),"%)"),
+  filter(SUMM_VAR == "N" & SUMM_CAT == "N" & COHORT == "ALS"  & DATA_COVERAGE != "ANY") %>%
+  inner_join(dt3 %>%
+               filter(SUMM_VAR == "N" & SUMM_CAT == "N" & COHORT == "ALS" & DATA_COVERAGE == "ANY") %>%
+               select(SITE, COHORT, SUMM_CNT) %>%
+               rename(SUMM_DENOM = SUMM_CNT),
+             by=c("SITE","COHORT")) %>%
+  mutate(SUMM_PROP = SUMM_CNT/SUMM_DENOM) %>%
+  mutate(label=paste0(round(SUMM_CNT/1000,1),"K(",round(SUMM_PROP*100),"%)"),
          page = case_when(SITE=="GPC"~"GPC",
                           TRUE ~ "Sites"))
+
+ggplot(dt3 %>%
+         filter(SUMM_VAR == "N" & SUMM_CAT == "N" & COHORT == "ALS" & DATA_COVERAGE == "ANY") %>%
+         mutate(label=paste0(round(SUMM_CNT/1000,2),"K"),
+                SITE=paste0(letters[rank(-SUMM_CNT)],".",SITE)),
+       aes(x=SITE,y=SUMM_CNT,group=DATA_COVERAGE))+
+  geom_bar(aes(fill=DATA_COVERAGE),stat="identity",position="dodge")+
+  geom_text(aes(label=label),position=position_dodge(width=1))+
+  theme(axis.text.x=element_text(angle=60),
+        text=element_text(face="bold",size=13),
+        panel.background = element_rect(fill = NA, colour = NA),
+        panel.grid.major.y = element_line(colour = "grey"))
+
 ggplot(dt3_als,aes(x=SITE,y=SUMM_CNT,group=DATA_COVERAGE))+
   geom_bar(aes(fill=DATA_COVERAGE),stat="identity",position="dodge")+
   geom_text(aes(label=label),position=position_dodge(width=1))+
+  theme(axis.text.x=element_text(angle=60),
+        text=element_text(face="bold",size=13),
+        panel.background = element_rect(fill = NA, colour = NA),
+        panel.grid.major.y = element_line(colour = "grey"))+
   facet_wrap(~page,ncol=1,scales="free")
 
-dt3_als_demo<-dt3 %>% 
-  filter(SUMM_VAR != "n" & COHORT == "ALS") %>%
-  mutate(SUMM_CAT = case_when(SUMM_CAT %in% paste0("agegrp",1:9) ~ paste0("agegrp0",gsub("agegrp","",SUMM_CAT)),
-                              TRUE ~ SUMM_CAT)) %>%
-  group_by(SUMM_VAR,SUMM_CAT,DATA_COVERAGE) %>%
-  mutate(label=case_when(SUMM_PROP==max(SUMM_PROP)~ SITE,
-                         TRUE ~ '')) %>%
-  ungroup
+# bc cohort
+dt3_bc<-dt3 %>%
+  filter(SUMM_VAR == "N" & SUMM_CAT == "N" & COHORT == "BC"  & DATA_COVERAGE != "ANY") %>%
+  inner_join(dt3 %>%
+               filter(SUMM_VAR == "N" & SUMM_CAT == "N" & COHORT == "BC" & DATA_COVERAGE == "ANY") %>%
+               select(SITE, COHORT, SUMM_CNT) %>%
+               rename(SUMM_DENOM = SUMM_CNT),
+             by=c("SITE","COHORT")) %>%
+  mutate(SUMM_PROP = SUMM_CNT/SUMM_DENOM) %>%
+  mutate(label=paste0(round(SUMM_CNT/1000),"K(",round(SUMM_PROP*100),"%)"),
+         page = case_when(SITE=="GPC"~"GPC",
+                          TRUE ~ "Sites"))
 
-ggplot(dt3_als_demo %>% filter(SITE=="GPC"),
-       aes(x=SUMM_CAT,y=SUMM_PROP))+
-  geom_bar(stat = "identity",position="dodge")+
+ggplot(dt3 %>%
+         filter(SUMM_VAR == "N" & SUMM_CAT == "N" & COHORT == "BC" & DATA_COVERAGE == "ANY") %>%
+         mutate(label=paste0(round(SUMM_CNT/1000),"K"),
+                SITE=paste0(letters[rank(-SUMM_CNT)],".",SITE)),
+       aes(x=SITE,y=SUMM_CNT,group=DATA_COVERAGE))+
+  geom_bar(aes(fill=DATA_COVERAGE),stat="identity",position="dodge")+
+  geom_text(aes(label=label),position=position_dodge(width=1))+
+  theme(axis.text.x=element_text(angle=60),
+        text=element_text(face="bold",size=13),
+        panel.background = element_rect(fill = NA, colour = NA),
+        panel.grid.major.y = element_line(colour = "grey"))
+
+ggplot(dt3_wt,aes(x=SITE,y=SUMM_CNT,group=DATA_COVERAGE))+
+  geom_bar(aes(fill=DATA_COVERAGE),stat="identity",position="dodge")+
+  geom_text(aes(label=label),position=position_dodge(width=1))+
   theme(axis.text.x=element_text(angle=60),
         text=element_text(face="bold",size=13),
         panel.background = element_rect(fill = NA, colour = NA),
         panel.grid.major.y = element_line(colour = "grey"))+
-  facet_wrap(~SUMM_VAR,ncol=1,scales = "free")
+  facet_wrap(~page,ncol=1,scales="free")
 
-ggplot(dt3_als_demo %>% filter(SITE!="GPC"),
-       aes(x=SUMM_CAT,y=SUMM_PROP,color=SITE))+
-  geom_point(aes(shape=as.factor(DATA_COVERAGE)),size=3) + 
-  geom_line(aes(group=interaction(SITE, DATA_COVERAGE)))+
-  geom_text_repel(aes(label=label))+
-  labs(shape="Data Coverage")+
-  theme(axis.text.x=element_text(angle=60),
-        text=element_text(face="bold",size=13),
-        panel.background = element_rect(fill = NA, colour = NA),
-        panel.grid.major.y = element_line(colour = "grey"))+
-  facet_wrap(~SUMM_VAR,ncol=2,scales = "free")
+
+
+

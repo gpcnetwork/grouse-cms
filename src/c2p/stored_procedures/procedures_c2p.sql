@@ -20,7 +20,7 @@ var collate_tgt_col = snowflake.createStatement({
                 FROM information_schema.columns 
                 WHERE table_catalog = current_database() 
                   AND table_schema = current_schema()
-                  AND table_name = 'PRIVATE_PROCEDURES';`});
+                  AND table_name = 'PROCEDURES';`});
 var global_cols = collate_tgt_col.execute(); global_cols.next();
 var cols_tgt = global_cols.getColumnValue(1).split(",");
 
@@ -28,7 +28,7 @@ var cols_tgt = global_cols.getColumnValue(1).split(",");
 var subset_clause = (SRC_SCHEMA === undefined) ? '': `WHERE a.src_schema = '` + SRC_SCHEMA + `'`;
 
 // step 1 - MEDPAR claims
-var t1_qry = `INSERT INTO private_procedures
+var t1_qry = `INSERT INTO procedures
               SELECT a.bene_id||'|'||a.medparid||'|'||to_number(a.px_idx)
                     ,a.bene_id
                     ,a.medparid
@@ -47,7 +47,7 @@ var t1_qry = `INSERT INTO private_procedures
 var run_t1_qry = snowflake.createStatement({sqlText: t1_qry});
 
 // step 2 - OUTPATIENT claims 
-var t2_qry = `INSERT INTO private_procedures
+var t2_qry = `INSERT INTO procedures
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||'|'||a.clm_id||'|'||to_number(a.px_idx)
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -63,13 +63,13 @@ var t2_qry = `INSERT INTO private_procedures
                      ,a.px_type
                      ,a.ppx
              FROM CMS_PCORNET_CDM_STAGING.private_procedures_stage_outpatient a  
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND a.px_date BETWEEN b.admit_date and b.discharge_date
                 `+ subset_clause +`;`;
 var run_t2_qry = snowflake.createStatement({sqlText: t2_qry});
 
 // step 3 - HHA, HOSPICE claims
-var t3_qry = `INSERT INTO private_procedures
+var t3_qry = `INSERT INTO procedures
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||'|'||a.clm_id||'|'||to_number(a.px_idx)
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -85,12 +85,12 @@ var t3_qry = `INSERT INTO private_procedures
                      ,a.px_type
                      ,'HC:NI'
              FROM CMS_PCORNET_CDM_STAGING.private_procedures_stage_hha a 
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND a.px_date BETWEEN b.admit_date and b.discharge_date
                 `+ subset_clause +`;`;
 var run_t3_qry = snowflake.createStatement({sqlText: t3_qry});
 
-var t4_qry = `INSERT INTO private_procedures
+var t4_qry = `INSERT INTO procedures
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||'|'||a.clm_id||'|'||to_number(a.px_idx)
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -106,13 +106,13 @@ var t4_qry = `INSERT INTO private_procedures
                      ,a.px_type
                      ,'HC:NI'
              FROM CMS_PCORNET_CDM_STAGING.private_procedures_stage_hospice a 
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND a.px_date BETWEEN b.admit_date and b.discharge_date
                 `+ subset_clause +`;`;
 var run_t4_qry = snowflake.createStatement({sqlText: t4_qry});
 
 // step 4 - BCARRIER, DME claims
-var t5_qry = `INSERT INTO private_procedures
+var t5_qry = `INSERT INTO procedures
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||'|'||a.clm_id||'|'||to_number(a.px_idx)
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -128,12 +128,12 @@ var t5_qry = `INSERT INTO private_procedures
                      ,a.px_type
                      ,'HC:NI'
              FROM CMS_PCORNET_CDM_STAGING.private_procedures_stage_bcarrier a
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND a.px_date BETWEEN b.admit_date and b.discharge_date
                 `+ subset_clause +`;`;
 var run_t5_qry = snowflake.createStatement({sqlText: t5_qry});
 
-var t6_qry = `INSERT INTO private_procedures
+var t6_qry = `INSERT INTO procedures
               SELECT  a.bene_id||'|'||NVL(b.encounterid,a.clm_id)||'|'||a.clm_id||'|'||to_number(a.px_idx)
                      ,a.bene_id
                      ,NVL(b.encounterid,a.clm_id) 
@@ -149,7 +149,7 @@ var t6_qry = `INSERT INTO private_procedures
                      ,a.px_type
                      ,'HC:NI'
              FROM CMS_PCORNET_CDM_STAGING.private_procedures_stage_dme a 
-             LEFT JOIN private_encounter b
+             LEFT JOIN encounter b
              ON a.bene_id = b.patid AND a.px_date BETWEEN b.admit_date and b.discharge_date
              `+ subset_clause +`;`;
 var run_t6_qry = snowflake.createStatement({sqlText: t6_qry});

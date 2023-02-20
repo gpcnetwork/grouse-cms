@@ -46,17 +46,17 @@ if(SRC_TABLE.includes('RUCA')){
 }else if(SRC_TABLE.includes('ADI')){
     var stg_qry = `INSERT INTO private_obs_comm_stage
                    WITH adi_cte AS (
-                       SELECT fips_cbg
+                       SELECT fips_bg
                              ,'NATRANK' AS adi_type
                              ,ADI_NATRANK AS adi_val
                        FROM `+ SRC_SCHEMA +`.`+ SRC_TABLE +`
                        UNION
-                       SELECT fips_cbg
+                       SELECT fips_bg
                              ,'STATERANK'
                              ,ADI_STATERANK
                        FROM `+ SRC_SCHEMA +`.`+ SRC_TABLE +`
                    )
-                   SELECT fips_cbg
+                   SELECT fips_bg
                          ,'BG' -- follow GEO_ACCURACY valueset
                          ,'ADI|'||adi_type
                          ,'UD'

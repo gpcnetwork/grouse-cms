@@ -17,6 +17,37 @@ from urllib.request import urlopen
 from zipfile import ZipFile
 from io import BytesIO
 
+
+
+'''
+def SfExec_ScriptsFromFile(path_to_file):
+    """load script directly from file"""
+    # Open and read the file as a single buffer
+    fd = open(path_to_file, 'r')
+    sqlFile = fd.read()
+    fd.close()
+
+    # all SQL commands (split on ';')
+    sqlCommands = sqlFile.split(';')
+
+    # Execute every command from the input file
+    for command in sqlCommands:
+        print(command)
+
+path_to_file = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))+'/c2p/ddl/address_geocode_ddl.sql'
+SfExec_ScriptsFromFile(path_to_file)
+'''
+
+"""
+dir_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+for filename in os.listdir(f'{dir_path}/ref'):
+    if os.path.isfile(f'{dir_path}/ref/{filename}'):
+        print(filename)
+    else:
+        continue
+"""
+
+"""
 upload_handler={}
 dir_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 tmp_dir_path = f'{dir_path}/staging/tmp_dir'
@@ -38,9 +69,7 @@ for resp_file in resp:
     csv_name.extend([i for i in file_lst if ".csv" in i])
     ref_name.append([i for i in file_lst if "ref-file" in i.lower()])
     print(f'files downloaded:{file_lst} ')
-
-
-
+"""
 
 '''
 upload_handler["cpt_ccs"] = ["CPT_RANGE","CCSLVL","CCSLVL_LABEL","CPT_LB","CPT_UB","VRSN"] #hard-coded
@@ -90,23 +119,30 @@ s3_bucket = s3_client.Bucket('gpc-mcri-upload')
 s3_bucket.download_file(Key = 'extract/xwalk2cdm.csv',
                         Filename = 'xwalk2cdm.csv')
 '''
-
 '''
+
 #load custom package
 sys.path.append(os.path.abspath(f'{os.path.dirname(os.path.dirname(__file__))}/stage'))
 import utils,extract,load
 
-sasdf, sasmeta = pyreadstat.read_sas7bdat('encounter.sas7bdat',row_offset=0, row_limit=1, metadataonly=True)
-print(sasmeta)
-'''
+# sasdf, sasmeta = pyreadstat.read_sas7bdat('condition.sas7bdat',row_offset=0, row_limit=1, metadataonly=True)
+# print(sasmeta)
 
-# sasdf, sasmeta = pyreadstat.read_sas7bdat('encounter.sas7bdat',row_offset=0, row_limit=10000000,
+next_row, sasdf, sasmeta = load.Read_SAS7bDAT('diagnosis', 
+                                           row_offset=0,
+                                           row_limit=100,
+                                           encoding = 'utf-8') #default is usually "utf-8". Alternatives: "latin1","iso-8859-1"
+print(sasdf.iloc[1:5,1:15])                        
+
+'''
+# sasdf, sasmeta = pyreadstat.read_sas7bdat('condition.sas7bdat',row_offset=0, row_limit=100,
 #                                           disable_datetime_conversion=True,
 #                                           encoding = 'utf-8')
-# print(sasdf.iloc[1:5,1:5])
+# print(sasdf.iloc[1:5,1:15])
 # print(sasmeta.original_variable_types)
 
 # def fix_datetime_cols(df, meta, tz = 'UTC'): 
+#     # fix integer date
 #     cols = [col for col in df if col.lower().endswith('_date')]
 #     for col in cols:
 #         # some date columns may auto-convert to datetime64 formate
@@ -122,6 +158,7 @@ print(sasmeta)
 #         # https://stackoverflow.com/questions/32888124/pandas-out-of-bounds-nanosecond-timestamp-after-offset-rollforward-plus-adding-a
 #         df[col] = pd.to_datetime(df[col],errors = 'coerce').dt.date #errored out any future dates (including the articial one)
     
+#     ## fix integer time
 #     cols = [col for col in df if col.lower().endswith('_time')]
 #     for col in cols:
 #         # some time column doesn't preserve the original HH:MM format
@@ -133,7 +170,7 @@ print(sasmeta)
 #     return(df)
     
 # df=fix_datetime_cols(sasdf,sasmeta)
-# print(df.iloc[1:5,1:5])
+# print(df.iloc[1:5,1:15])
 
 # with SAS7BDAT('harvestnew.sas7bdat') as r:
 #     row = r.to_data_frame()

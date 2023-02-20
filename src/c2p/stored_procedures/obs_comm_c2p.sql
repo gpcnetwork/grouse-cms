@@ -23,25 +23,25 @@ var subset_clause = `WHERE a.src_table = '` + SRC_TABLE + `'`;
 let matching_clause = `a.obscomm_geo_accuracy = '`+ GEO_ACCURACY +`'`;
 switch(GEO_ACCURACY){
     case 'BG':
-        subset_clause += ` AND a.geocodeid = b.geocode_group`;
+        subset_clause += ` AND a.obscomm_geocodeid = b.geocode_group`;
         break;
     case 'TR':
-        subset_clause += ` AND a.geocodeid = b.geocode_tract`;
+        subset_clause += ` AND a.obscomm_geocodeid = b.geocode_tract`;
         break;
     case 'CN':
-        subset_clause += ` AND a.geocodeid = b.geocode_county`;
+        subset_clause += ` AND a.obscomm_geocodeid = b.geocode_county`;
         break;
     case 'ST':
-        subset_clause += ` AND a.geocodeid = b.geocode_state`;
+        subset_clause += ` AND a.obscomm_geocodeid = b.geocode_state`;
         break;
     case 'Z5':
-        subset_clause += ` AND a.geocodeid = substr(b.geocode_zip,1,5)`;
+        subset_clause += ` AND a.obscomm_geocodeid = substr(b.geocode_zip,1,5)`;
         break;
 }
 // generate dynamic dml query
 var t_qry = `INSERT INTO obs_comm
                SELECT DISTINCT 
-                      a.geocodeid
+                      a.obscomm_geocodeid
                      ,a.obscomm_geo_accuracy
                      ,a.obscomm_code
                      ,a.obscomm_type
@@ -52,8 +52,6 @@ var t_qry = `INSERT INTO obs_comm
                      ,a.obscomm_result_unit
                      ,a.raw_obscomm_name
                      ,a.raw_obscomm_result
-                    --  ,a.src_date_start
-                    --  ,a.src_date_end
                FROM CMS_PCORNET_CDM_STAGING.private_obs_comm_stage a
                JOIN private_address_geocode b
                ON `+ matching_clause +` `+ subset_clause +`;`;

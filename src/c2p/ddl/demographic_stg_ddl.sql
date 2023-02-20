@@ -17,4 +17,5 @@ create or replace table PRIVATE_DEMOGRAPHIC_STAGE (
     ,SRC_SCHEMA varchar(20) NOT NULL
     ,SRC_TABLE varchar(30) NOT NULL
     ,SRC_DATE date NOT NULL
+    ,SRC_CONFIDENCE integer NOT NULL -- highest confidence to MBSF table
 );
