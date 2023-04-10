@@ -12,12 +12,11 @@ and privacy requirements, Journal of the American Medical Informatics Associatio
 ocab269, https://doi.org/10.1093/jamia/ocab269*
 ```
 
-For more details on GROUSE CMS DUA protocol, security policy and procedures, as well as other technical documents, please refer to the following resources: 
+For more details on GROUSE CMS DUA protocol, security policy and procedures, as well as other technical documents, please refer to the following resources. Please note that some of the documents below (e.g., IRB, Protocol) may change over time and the snapshot shared below may be out-of-date. Please reach out to [ask-umbmi@umsystem.edu](mailto:ask-umbmi@umsystem.edu) to confirm and/or request the most updated version of the document of interests: 
 - [GROUSE Keystone Protocol](doc/GROUSE_Keystone_Protocol_202303_clean.pdf)
-- [GROUSE CMS Executive Summary](doc/CMS_Executive_Summary.pdf)
-- [GROUSE Keystone IRB Approval](doc/GROUSE_Keystone_IRB-HIPPA-Waiver_Approval.pdf): _given the changing nature of IRB review (annual review, minor modification), we only include the most current IRB approval notice. For longitudinal tracker of IRB changes as well as full IRB applications, please reach out to ask-umbmi@umsystem.edu for a copy_ 
-- [GROUSE Data Management Plan (DMP SAQ) Approval](doc/CUM_AWS_030823.pdf)
-- [GROUSE Data Management Plan (DMP SAQ) Full](doc/CUM_AWS-CMS%20DPSP%20DMP%20SAQ_2023.pdf)
+- [GROUSE CMS Executive Summary](doc/02_Amend_Exec_Summ_RESDAC-5805-signed.pdf)
+- [GROUSE Keystone IRB Application](doc/irb_application_amend_feb-02-2022-hippa-waiver.pdf) and [Approval Notice](doc/irb_approval_letter_mar-03-2022-hippa-waiver.pdf)
+- [GROUSE Data Management Plan (DMP SAQ)](doc/CUM_AWS-CMS%20DPSP%20DMP%20SAQ_2023.pdf) and [Certification Notice](doc/CUM_AWS_030823.pdf)
 - [System Security Policy Deck](doc/SSP_Policy_Deck.pdf)
 - [GROUSE Private Github Repository](https://github.com/gpcnetwork/GROUSE): _this private github repo contains more sensitive information about the environment, please reach out to ask-umbmi@umsystem.edu for access_
 - In addition, GPC has released [Front-Porch Resource Guide](https://gpcnetwork.org/sites/default/files/GPC%20Front%20Porch%20Guide%20Version%201.6.pdf) for researchers to navigate other GPC resources. 
