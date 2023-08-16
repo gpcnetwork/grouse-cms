@@ -19,6 +19,7 @@ For more details on GROUSE CMS DUA protocol, security policy and procedures, as 
 - [GROUSE Keystone IRB Amendment - non-CMS inclusion](doc/irb_application_amend_jan-2023-incld-non-cms-new-protocol.pdf) and [Approval Notice](doc/irb_approval_letter_apr-04-2023_amend-incld-noncms-new-protocol.pdf)
 - [GROUSE Data Management Plan (DMP SAQ)](doc/CUM_AWS-CMS%20DPSP%20DMP%20SAQ_2023.pdf) and [Certification Notice](doc/CUM_AWS_030823.pdf)
 - [System Security Policy Deck](doc/SSP_Policy_Deck.pdf)
+- [HIPAA Security Rule Assessment](doc/HIPAA_Security_Rule_Assessment.pdf)
 - [GROUSE Private Github Repository](https://github.com/gpcnetwork/GROUSE): _this private github repo contains more sensitive information about the environment, please reach out to ask-umbmi@umsystem.edu for access_
 - In addition, GPC has released [Front-Porch Resource Guide](https://gpcnetwork.org/sites/default/files/GPC%20Front%20Porch%20Guide%20Version%201.6.pdf) for researchers to navigate other GPC resources. 
 
