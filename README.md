@@ -26,6 +26,19 @@ For more details on GROUSE CMS DUA protocol, security policy and procedures, as 
 **********************************************************************************************
 
 # Data Resources
+
+## Fast Facts
+- Estimated size of GPC EHR cohort: ~ 31.7M
+- Estimated size of GPC Medicare beneficiary cohort: ~ 13.7M
+- Estimated size of GPC Medicaid beneficiary cohort: ~ 13.7M
+- Estimated size of crosswalk cohort: ~ 4.5M
+- Estimated size of GPC weight cohort: ~ 16.7M
+    - Estimated size of the crosswalked GPC weight cohort: ~ 3.2M
+- Estimated size of GPC ALS (confirmed) cohort: ~ 10.4K
+    - Estimated size of the crosswalked GPC ALS cohort: ~ 4.8K
+- Estimated size of GPC tumor (tumor + EHR) cohort: ~ 234K (9 sites)
+    - Estimated size of the crosswalked GPC tumor cohort: ~ 53K
+    
 ## Electronic Health Records (EHR) and PCORnet Common Data Model (CDM)
 GPC is a PCORnet Clinical Data Research Network (CDRN) bringing together a diverse population of 30 million patients from 13 health systems across 11 states (Kansas, Missouri, Iowa, Wisconsin, Nebraska, Minnesota, Texas, Utah, Idaho, Nevada, Wyoming, and portions of periperal states such as Chicago and Michigan). All GPC sites have aggregated longitudinal EHR data using the PCORnet CDM ensuring interoperability of data across multiple institutions.  
 
