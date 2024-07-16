@@ -28,14 +28,14 @@ For more details on GROUSE CMS DUA protocol, security policy and procedures, as 
 # Data Resources
 
 ## Fast Facts
-- Estimated size of GPC EHR cohort: ~ 31.7M
-- Estimated size of GPC Medicare beneficiary cohort: ~ 13.7M
-- Estimated size of GPC Medicaid beneficiary cohort: ~ 13.7M
+- Estimated size of GPC EHR cohort: ~ 33.4M
+- Estimated size of GPC Medicare beneficiary cohort: ~ 18.7M
+- Estimated size of GPC Medicaid beneficiary cohort: ~ 11.4M
 - Estimated size of crosswalk cohort: ~ 4.5M
-- Estimated size of GPC weight cohort: ~ 16.7M
+- Estimated size of GPC weight cohort: ~ 17.9M
     - Estimated size of the crosswalked GPC weight cohort: ~ 3.2M
-- Estimated size of GPC ALS (confirmed) cohort: ~ 10.4K
-    - Estimated size of the crosswalked GPC ALS cohort: ~ 4.8K
+- Estimated size of GPC ALS (confirmed) cohort: ~ 12.5K
+    - Estimated size of the crosswalked GPC ALS cohort: ~ 
 - Estimated size of GPC tumor (tumor + EHR) cohort: ~ 234K (9 sites)
     - Estimated size of the crosswalked GPC tumor cohort: ~ 53K
     
