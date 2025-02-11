@@ -130,14 +130,15 @@ We have also released the following grouper valusets for research use:
 # Geocoding and Public Data Files
 Medicare and Medicaid claims (CMS RIF files) contains Zip+4 information for patients at each year of enrollment. We mapped the Zip+4 to Census Block Group and create a GEOID, which can be used to link to the following publically available, community-level data files. 
 
-## American Community Survey
-The American Community Survey (ACS) is an ongoing survey that provides data every year -- giving communities the current information they need to plan investments and services. The ACS covers a broad range of topics about social, economic, demographic, and housing characteristics of the U.S. population. We have loaded a selective sets of ACS variables from 2019 release. We have loaded the curated ACS data from https://github.com/UNMC-CRANE/SDH, and made it linkable to other datasets. 
-
 ## Area Deprivation Index
 The Area Deprivation Index (ADI) is based on a measure created by the Health Resources & Services Administration (HRSA) over three decades ago, and has since been refined, adapted, and validated to the Census Block Group neighborhood level by Amy Kind, MD, PhD and her research team at the University of Wisconsin-Madison. We have loaded the 2020 ADI data downloaded from https://www.neighborhoodatlas.medicine.wisc.edu/ and made it linkable to other datasets. 
 
 ## Rural-Urban Commuting Area Codes
 The rural-urban commuting area (RUCA) codes classify U.S. census tracts using **measures of population density, urbanization, and daily commuting**. We have loaded the 2010 RUCA (most recent release) from https://www.ers.usda.gov/data-products/rural-urban-commuting-area-codes/ and made it likable to other datasets. 
+
+## AHRQ SDOH Database
+AHRQ (Agency for Healthcare Research and Quality)'s database on Social Determinants of Health (SDOH) was created under a project funded by the Patient Centered Outcomes Research (PCOR) Trust Fund. The data contained in the AHRQ-SDOH database are drawn from multiple sources with American Community Survey as the primary source.Variables in the files correspond to five key SDOH domains: social context (e.g., age, race/ethnicity, veteran status), economic context (e.g., income, unemployment rate), education, physical infrastructure (e.g, housing, crime, transportation), and healthcare context (e.g., health insurance). We have loaded the multi-year AHRQ-SDOH database from https://www.ahrq.gov/sdoh/data-analytics/sdoh-data.html and made it linkable with primarily CMS data at census tract level. 
+
 
 ***************************************************************************************************
 
