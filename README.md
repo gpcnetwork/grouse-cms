@@ -139,6 +139,11 @@ The rural-urban commuting area (RUCA) codes classify U.S. census tracts using **
 ## AHRQ SDOH Database
 AHRQ (Agency for Healthcare Research and Quality)'s database on Social Determinants of Health (SDOH) was created under a project funded by the Patient Centered Outcomes Research (PCOR) Trust Fund. The data contained in the AHRQ-SDOH database are drawn from multiple sources with American Community Survey as the primary source.Variables in the files correspond to five key SDOH domains: social context (e.g., age, race/ethnicity, veteran status), economic context (e.g., income, unemployment rate), education, physical infrastructure (e.g, housing, crime, transportation), and healthcare context (e.g., health insurance). We have loaded the multi-year AHRQ-SDOH database from https://www.ahrq.gov/sdoh/data-analytics/sdoh-data.html and made it linkable with primarily CMS data at census tract level. 
 
+## EPA Environmental Exposure Database
+[To be added]
+
+## USGS Pesticide Use Estimates
+[To be added]
 
 ***************************************************************************************************
 
