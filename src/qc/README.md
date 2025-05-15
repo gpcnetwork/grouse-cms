@@ -1,1 +1,0 @@
-This folder contains Quality Control codes for GROUSE data
