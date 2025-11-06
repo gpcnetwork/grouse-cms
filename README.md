@@ -13,7 +13,7 @@ ocab269, https://doi.org/10.1093/jamia/ocab269*
 ```
 
 For more details on GROUSE CMS DUA protocol, security policy and procedures, as well as other technical documents, please refer to the following resources. Please note that some of the documents below (e.g., IRB, Protocol) may change over time and the snapshot shared below may be out-of-date. Please reach out to [ask-umbmi@umsystem.edu](mailto:ask-umbmi@umsystem.edu) to confirm and/or request the most updated version of the document of interests: 
-- [GROUSE Keystone Protocol](doc/GROUSE_Keystone_Protocol_202412_clean.pdf)
+- [GROUSE Keystone Protocol](doc/GROUSE_Keystone_Protocol_clean.pdf)
 - [GROUSE CMS Executive Summary](doc/02_Amend_Exec_Summ_RESDAC-5805-signed.pdf)
 - [GROUSE Keystone IRB Application - HIPAA Waiver](doc/irb_application_amend_feb-02-2022-hippa-waiver.pdf) and [Approval Notice](doc/irb_approval_letter_mar-03-2022-hippa-waiver.pdf)
 - [GROUSE Keystone IRB Amendment - non-CMS inclusion](doc/irb_application_amend_jan-2023-incld-non-cms-new-protocol.pdf) and [Approval Notice](doc/irb_approval_letter_apr-04-2023_amend-incld-noncms-new-protocol.pdf)
